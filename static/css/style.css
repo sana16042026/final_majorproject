@@ -1,0 +1,286 @@
+/* AI-Powered MPLADS Road Construction Monitoring System */
+/* Clean, professional, lightweight theme */
+
+:root {
+    --primary-blue: #0d6efd;
+    --primary-blue-dark: #0b5ed7;
+    --primary-blue-light: #e7f1ff;
+    --sidebar-bg: #1e293b;
+    --sidebar-hover: #334155;
+    --sidebar-active: #0d6efd;
+    --bg-light: #f8fafc;
+    --card-border: #e2e8f0;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --risk-low: #198754;
+    --risk-low-bg: #d1e7dd;
+    --risk-med: #ffc107;
+    --risk-med-bg: #fff3cd;
+    --risk-high: #dc3545;
+    --risk-high-bg: #f8d7da;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text-main);
+    min-height: 100vh;
+    display: flex;
+    overflow-x: hidden;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: var(--sidebar-bg);
+    color: #f8fafc;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    transition: all 0.2s ease-in-out;
+}
+
+.sidebar-brand {
+    padding: 1.25rem 1.5rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #ffffff;
+    text-decoration: none;
+}
+
+.sidebar-brand i {
+    font-size: 1.4rem;
+    color: #60a5fa;
+}
+
+.sidebar-nav {
+    padding: 1rem 0;
+    list-style: none;
+    margin: 0;
+    flex-grow: 1;
+}
+
+.nav-item {
+    margin: 0.2rem 0.75rem;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.7rem 1rem;
+    color: #cbd5e1;
+    border-radius: 6px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.nav-link:hover {
+    background-color: var(--sidebar-hover);
+    color: #ffffff;
+}
+
+.nav-link.active {
+    background-color: var(--sidebar-active);
+    color: #ffffff;
+    font-weight: 600;
+}
+
+.nav-link i {
+    font-size: 1.15rem;
+    width: 20px;
+    text-align: center;
+}
+
+/* Main Content Area */
+.main-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* Topbar */
+.topbar {
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--card-border);
+    padding: 0.85rem 1.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.topbar-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.authority-badge {
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1d4ed8;
+    padding: 0.4rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+/* Cards */
+.card {
+    background-color: #ffffff;
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.card-header {
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--card-border);
+    font-weight: 600;
+    padding: 1rem 1.25rem;
+}
+
+/* Metric / Stat Cards */
+.stat-card {
+    border-left: 4px solid var(--primary-blue);
+    padding: 1.2rem;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card.stat-completed { border-left-color: #10b981; }
+.stat-card.stat-ongoing { border-left-color: #3b82f6; }
+.stat-card.stat-delayed { border-left-color: #f59e0b; }
+.stat-card.stat-highrisk { border-left-color: #ef4444; }
+.stat-card.stat-expenditure { border-left-color: #8b5cf6; }
+
+.stat-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+.stat-value {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.2;
+}
+
+.stat-icon {
+    font-size: 2.2rem;
+    opacity: 0.8;
+}
+
+/* Badges */
+.badge-risk-low {
+    background-color: var(--risk-low-bg);
+    color: var(--risk-low);
+    font-weight: 600;
+    padding: 0.35rem 0.65rem;
+    border-radius: 4px;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+.badge-risk-med {
+    background-color: var(--risk-med-bg);
+    color: #856404;
+    font-weight: 600;
+    padding: 0.35rem 0.65rem;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.badge-risk-high {
+    background-color: var(--risk-high-bg);
+    color: var(--risk-high);
+    font-weight: 600;
+    padding: 0.35rem 0.65rem;
+    border-radius: 4px;
+    border: 1px solid rgba(220, 53, 69, 0.3);
+}
+
+/* Tables */
+.table thead th {
+    background-color: #f1f5f9;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--card-border);
+}
+
+.table td {
+    vertical-align: middle;
+    font-size: 0.9rem;
+}
+
+/* Upload Box */
+.upload-dropzone {
+    border: 2px dashed #93c5fd;
+    background-color: #f8fafc;
+    border-radius: 8px;
+    padding: 3rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.upload-dropzone:hover, .upload-dropzone.dragover {
+    background-color: #eff6ff;
+    border-color: #2563eb;
+}
+
+/* Risk Meter */
+.risk-meter {
+    height: 10px;
+    border-radius: 5px;
+    background-color: #e2e8f0;
+    overflow: hidden;
+}
+
+.risk-meter-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+/* Print styles for reports */
+@media print {
+    .sidebar, .topbar, .btn-print, .no-print {
+        display: none !important;
+    }
+    body {
+        background-color: #ffffff;
+    }
+    .main-wrapper {
+        margin: 0;
+        padding: 0;
+    }
+    .card {
+        border: 1px solid #000 !important;
+        box-shadow: none !important;
+    }
+}

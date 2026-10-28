@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Project Reports{% endblock %}
+
+{% block page_icon %}<i class="bi bi-file-earmark-bar-graph text-primary me-2"></i>{% endblock %}
+{% block page_title %}Road Construction Audit Reports{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4 no-print">
+    <div class="col-lg-5">
+        <!-- Project Specific Report Generator -->
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white">
+                <span class="fw-bold"><i class="bi bi-search text-primary me-2"></i>Generate Project Analysis Report</span>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-3">
+                    Search and select any road project by Work ID to generate an official comprehensive audit report with ML risk breakdown, predicted outcome and location-aware duplicate check.
+                </p>
+                <div class="input-group mb-3">
+                    <input type="text" id="report-search-id" class="form-control" placeholder="Enter Work ID (e.g. RD1001)...">
+                    <button class="btn btn-primary" type="button" id="btn-generate-report">
+                        <i class="bi bi-file-earmark-text me-1"></i> Generate
+                    </button>
+                </div>
+
+                <div class="border rounded p-2 bg-light">
+                    <div class="small fw-bold text-muted mb-1">Quick Select High-Risk Projects:</div>
+                    <div id="quick-high-risk-pills" class="d-flex flex-wrap gap-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <!-- System Summary Report Card -->
+        <div class="card h-100 shadow-sm">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-pie-chart-fill text-primary me-2"></i>Dataset Audit Summary</span>
+                <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                    <i class="bi bi-printer me-1"></i> Print / Save PDF
+                </button>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 mb-3 text-center">
+                    <div class="col-4">
+                        <div class="p-2 border rounded bg-light">
+                            <div class="small text-muted">Audited Projects</div>
+                            <div class="fs-4 fw-bold text-primary" id="summary-total-projects">0</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 border rounded bg-light">
+                            <div class="small text-muted">High Risk Detected</div>
+                            <div class="fs-4 fw-bold text-danger" id="summary-high-risk">0</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-2 border rounded bg-light">
+                            <div class="small text-muted">ML Anomalies</div>
+                            <div class="fs-4 fw-bold text-warning" id="summary-anomalies">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-2 mb-3 text-center">
+                    <div class="col-3">
+                        <div class="p-2 border rounded bg-light">
+                            <div class="small text-muted">Likely Duplicates</div>
+                            <div class="fs-5 fw-bold text-danger" id="summary-likely-duplicates">0</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-2 border rounded bg-light">
+                            <div class="small text-muted">Possible Overlaps</div>
+                            <div class="fs-5 fw-bold text-warning" id="summary-possible-overlaps">0</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-2 border rounded bg-light">
+                            <div class="small text-muted">Delay Likely</div>
+                            <div class="fs-5 fw-bold text-danger" id="summary-likely-delayed">0</div>
+                        </div>
+                    </div>
+                    <div class="col-3">
+                        <div class="p-2 border rounded bg-light">
+                            <div class="small text-muted">Overrun Likely</div>
+                            <div class="fs-5 fw-bold text-warning" id="summary-likely-overrun">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between small text-muted border-top pt-2">
+                    <span>Total Sanctioned: <strong id="summary-sanctioned" class="text-dark">₹0</strong></span>
+                    <span>Total Expenditure: <strong id="summary-expenditure" class="text-dark">₹0</strong></span>
+                    <span>NLP Similarities: <strong id="summary-nlp-count" class="text-dark">0</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Generated Project Analysis Report Container -->
+<div class="card shadow-sm" id="report-view-container">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+        <div>
+            <i class="bi bi-file-earmark-check-fill text-success me-2"></i>
+            <span class="fw-bold" id="report-title-heading">Official Road Project Audit Report</span>
+        </div>
+        <a id="download-project-report" class="btn btn-outline-primary btn-sm d-none" href="#">Download report</a>
+        <button class="btn btn-primary btn-sm btn-print" onclick="window.print()">
+            <i class="bi bi-printer-fill me-1"></i> Print / Export Report
+        </button>
+    </div>
+    <div class="card-body p-4" id="report-content-body">
+        <div class="text-center py-5 text-muted">
+            <i class="bi bi-file-earmark-text fs-1 mb-2 d-block opacity-50"></i>
+            Select or enter a Work ID above to view the detailed project analysis report.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,29 @@
+In VS Code, open:
+data → Master_Road_Work_Dataset_15000.xlsx
+Say: “This workbook is the original source of the 15,000 road-work records.”
+
+In your MariaDB terminal, run these commands one at a time:
+    USE drishti_master_road;
+    SHOW TABLES;
+Say: “The processed records and analysis results are stored in these database tables.”
+
+Show the imported record count:
+   SELECT COUNT(*) AS total_projects
+   FROM road_projects;
+   It should display 15,000.
+
+Display actual stored records:
+    SELECT work_id, state, district,
+       actual_expenditure, delay_days, status
+    FROM road_projects
+    ORDER BY work_id
+    LIMIT 10;
+
+Show stored ML results:
+   SELECT work_id, anomaly_score, anomaly_detected
+   FROM ml_analysis
+   LIMIT 10;
+
+Show the physical database storage folder:
+    SELECT @@datadir AS database_storage_folder;
+Say: “This is the folder where the database server stores its files. We access and manage the records through SQL.”

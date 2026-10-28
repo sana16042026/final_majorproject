@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Road Projects{% endblock %}
+
+{% block page_icon %}<i class="bi bi-table text-primary me-2"></i>{% endblock %}
+{% block page_title %}Road Construction Projects{% endblock %}
+
+{% block extra_head %}
+{% if not can_see_ai %}
+<style>
+    /* Hide the Risk column (9th) for roles without AI access */
+    #projects-table th:nth-child(9),
+    #projects-table td:nth-child(9) { display: none; }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <form id="filter-form" class="row g-2 align-items-center">
+            <!-- Search by Work ID or description -->
+            <div class="col-lg-3 col-md-6">
+                <label class="form-label small text-muted fw-bold mb-1">Search</label>
+                <div class="input-group input-group-sm">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="filter-search" class="form-control" placeholder="Search Work ID or description...">
+                </div>
+            </div>
+
+            <!-- State Filter -->
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <label class="form-label small text-muted fw-bold mb-1">State</label>
+                <select id="filter-state" class="form-select form-select-sm">
+                    <option value="">All States</option>
+                </select>
+            </div>
+
+            <!-- District Filter -->
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <label class="form-label small text-muted fw-bold mb-1">District</label>
+                <select id="filter-district" class="form-select form-select-sm">
+                    <option value="">All Districts</option>
+                </select>
+            </div>
+
+            <!-- Risk Level Filter (admin / ministry / auditor only) -->
+            <div class="col-lg-2 col-md-4 col-sm-6 ai-only">
+                <label class="form-label small text-muted fw-bold mb-1">Risk Level</label>
+                <select id="filter-risk" class="form-select form-select-sm">
+                    <option value="">All Risk Levels</option>
+                    <option value="HIGH">🔴 High Risk</option>
+                    <option value="MEDIUM">🟡 Medium Risk</option>
+                    <option value="LOW">🟢 Low Risk</option>
+                </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="col-lg-2 col-md-4 col-sm-6">
+                <label class="form-label small text-muted fw-bold mb-1">Status</label>
+                <select id="filter-status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Ongoing">Ongoing</option>
+                    <option value="Delayed">Delayed</option>
+                </select>
+            </div>
+
+            <!-- Reset Button -->
+            <div class="col-lg-1 col-md-4 col-sm-6 text-end pt-3">
+                <button type="button" id="btn-reset-filters" class="btn btn-outline-secondary btn-sm w-100" title="Reset all filters">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Table Card -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-bold">
+            <i class="bi bi-list-columns-reverse text-primary me-2"></i>
+            Project Records (<span id="total-count-badge">0</span> found)
+        </span>
+        {% if 'upload' in allowed_pages %}
+        <a href="/upload" class="btn btn-primary btn-sm">
+            <i class="bi bi-cloud-arrow-up me-1"></i> Upload Dataset
+        </a>
+        {% endif %}
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="projects-table">
+            <thead>
+                <tr>
+                    <th>Work ID</th>
+                    <th>Description</th>
+                    <th>State</th>
+                    <th>District</th>
+                    <th>Estimated Cost</th>
+                    <th>Actual Expenditure</th>
+                    <th>Progress %</th>
+                    <th>Delay Days</th>
+                    <th>Risk</th>
+                    <th>Status</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody id="projects-tbody">
+                <tr>
+                    <td colspan="11" class="text-center py-4 text-muted">
+                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                        Loading projects...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <!-- Pagination Footer -->
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center flex-wrap py-2">
+        <div class="small text-muted" id="pagination-info">
+            Showing projects 1 - 50 of 0
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <button class="btn btn-outline-secondary btn-sm" id="btn-prev-page" disabled>
+                <i class="bi bi-chevron-left me-1"></i> Previous
+            </button>
+            <span class="small fw-semibold" id="page-num-display">Page 1 / 1</span>
+            <button class="btn btn-outline-secondary btn-sm" id="btn-next-page" disabled>
+                Next <i class="bi bi-chevron-right ms-1"></i>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/projects.js') }}"></script>
+{% endblock %}

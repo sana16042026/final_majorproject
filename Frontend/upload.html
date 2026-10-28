@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Dataset{% endblock %}
+
+{% block page_icon %}<i class="bi bi-folder-symlink text-primary me-2"></i>{% endblock %}
+{% block page_title %}Upload Road Construction Dataset{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <!-- Main Upload Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white border-bottom">
+                <span class="fw-bold fs-5 text-dark">
+                    <i class="bi bi-file-earmark-spreadsheet-fill text-primary me-2"></i>
+                    Dataset Upload Portal
+                </span>
+            </div>
+            <div class="card-body p-4">
+                <p class="text-muted small mb-4">
+                    Upload MPLADS Road Construction data in <strong>.csv</strong> or <strong>.xlsx</strong> format.
+                    Master workbook columns are mapped automatically; money in crore is converted to INR. Delay days are calculated from the dates. The system will validate columns, clean data, run NLP description similarity, execute Isolation Forest anomaly detection, compute risk scores, and update the dashboard dynamically.
+                </p>
+
+                <!-- Drag and Drop Zone -->
+                <div class="upload-dropzone mb-3" id="dropzone">
+                    <i class="bi bi-cloud-arrow-up-fill text-primary" style="font-size: 3rem;"></i>
+                    <h5 class="mt-2 mb-1 fw-bold text-dark">Drag and drop your dataset file here</h5>
+                    <p class="text-muted small mb-3">Accepts .CSV, .XLSX, or .XLS (Up to 32MB)</p>
+
+                    <input type="file" id="file-input" class="d-none" accept=".csv, .xlsx, .xls">
+
+                    <button type="button" class="btn btn-primary px-4 py-2" id="btn-browse">
+                        <i class="bi bi-folder2-open me-2"></i> 📁 Upload Dataset
+                    </button>
+
+                    <div id="selected-file-info" class="mt-3 text-primary fw-semibold small d-none"></div>
+                </div>
+
+                <!-- Action Button for Upload -->
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                    <div>
+                        <a href="/api/sample/download-template" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-download me-1"></i> Download Master Workbook
+                        </a>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="button" id="btn-load-sample" class="btn btn-outline-success btn-sm">
+                            <i class="bi bi-lightning-charge-fill me-1"></i> Load Master Dataset (15,000 Works)
+                        </button>
+                        <button type="button" id="btn-start-process" class="btn btn-success btn-sm px-3" disabled>
+                            <i class="bi bi-gear-wide-connected me-1"></i> Process & Save
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Processing Feedback Box -->
+        <div class="card shadow-sm mb-4 d-none" id="processing-box">
+            <div class="card-header bg-white">
+                <span class="fw-bold">
+                    <i class="bi bi-activity text-primary me-2"></i>
+                    Processing Pipeline Status
+                </span>
+            </div>
+            <div class="card-body p-4">
+                <!-- Status Message Banner (Section 6 Requirement) -->
+                <div id="status-banner" class="alert alert-info d-flex align-items-center mb-4">
+                    <div class="spinner-border spinner-border-sm text-primary me-2" id="status-spinner"></div>
+                    <span id="status-text" class="fw-semibold">Processing dataset through AI & ML pipeline...</span>
+                </div>
+
+                <!-- 6 Sequential Pipeline Steps -->
+                <div class="list-group list-group-flush small" id="pipeline-steps">
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-check-circle-fill text-success me-2"></i> 1. Read file using Pandas (.csv / .xlsx)</span>
+                        <span class="badge bg-success">Done</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-check-circle-fill text-success me-2"></i> 2. Validate required columns & clean data</span>
+                        <span class="badge bg-success">Done</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-check-circle-fill text-success me-2"></i> 3. Store road project records in MySQL</span>
+                        <span class="badge bg-success">Done</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-check-circle-fill text-success me-2"></i> 4. Run NLP TF-IDF Cosine Similarity on descriptions</span>
+                        <span class="badge bg-success">Done</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-check-circle-fill text-success me-2"></i> 5. Run Machine Learning (Isolation Forest Anomaly Detection)</span>
+                        <span class="badge bg-success">Done</span>
+                    </div>
+                    <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <span><i class="bi bi-check-circle-fill text-success me-2"></i> 6. Calculate Explainable Risk Scores & Generate Alerts</span>
+                        <span class="badge bg-success">Done</span>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="/" class="btn btn-primary btn-sm px-4">
+                        <i class="bi bi-speedometer2 me-1"></i> Go to Dashboard
+                    </a>
+                    <a href="/projects" class="btn btn-outline-primary btn-sm px-4 ms-2">
+                        <i class="bi bi-table me-1"></i> View Projects
+                    </a>
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}

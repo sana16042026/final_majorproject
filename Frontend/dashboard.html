@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block page_icon %}<i class="bi bi-speedometer2 text-primary me-2"></i>{% endblock %}
+{% block page_title %}Dashboard - MPLADS Road Construction Monitoring{% endblock %}
+
+{% block content %}
+
+
+{% if current_user %}
+<div class="alert alert-primary py-2 small d-flex align-items-center mb-3" role="alert">
+    <i class="bi bi-person-badge-fill me-2"></i>
+    <span>
+        <strong>{{ role_label }}</strong> &mdash;
+        {% if current_user.role == 'district_admin' and current_user.district %}
+            showing <strong>{{ current_user.district }}</strong> district only.
+        {% elif current_user.role == 'ministry' and current_user.mp_id %}
+            showing projects of MP <strong>{{ current_user.mp_id }}</strong> only.
+        {% elif current_user.role == 'vendor' %}
+            showing only the projects assigned to vendor <strong>{{ current_user.vendor_id }}</strong>.
+        {% elif current_user.role == 'citizen' %}
+            public transparency view: project progress and spending only.
+        {% else %}
+            full access to all projects.
+        {% endif %}
+    </span>
+</div>
+{% endif %}
+
+<!-- Section 10: Top Cards -->
+<div class="row g-3 mb-4">
+    <!-- Card 1: Total Road Projects -->
+    <div class="col-xl{{ '-2' if can_see_ai else '' }} col-md-4 col-sm-6">
+        <div class="card stat-card h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-title">Total Projects</div>
+                    <div class="stat-value" id="card-total-projects">0</div>
+                </div>
+                <i class="bi bi-cone-striped stat-icon text-primary"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 2: Completed Projects -->
+    <div class="col-xl{{ '-2' if can_see_ai else '' }} col-md-4 col-sm-6">
+        <div class="card stat-card stat-completed h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-title">Completed</div>
+                    <div class="stat-value text-success" id="card-completed-projects">0</div>
+                </div>
+                <i class="bi bi-check-circle-fill stat-icon text-success"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 3: Ongoing Projects -->
+    <div class="col-xl{{ '-2' if can_see_ai else '' }} col-md-4 col-sm-6">
+        <div class="card stat-card stat-ongoing h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-title">Ongoing</div>
+                    <div class="stat-value text-primary" id="card-ongoing-projects">0</div>
+                </div>
+                <i class="bi bi-arrow-repeat stat-icon text-primary"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 4: Delayed Projects -->
+    <div class="col-xl{{ '-2' if can_see_ai else '' }} col-md-4 col-sm-6">
+        <div class="card stat-card stat-delayed h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-title">Delayed</div>
+                    <div class="stat-value text-warning" id="card-delayed-projects">0</div>
+                </div>
+                <i class="bi bi-clock-history stat-icon text-warning"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 5: High-Risk Projects (admin / ministry / auditor only) -->
+    <div class="col-xl-2 col-md-4 col-sm-6 ai-only">
+        <div class="card stat-card stat-highrisk h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-title">High-Risk</div>
+                    <div class="stat-value text-danger" id="card-highrisk-projects">0</div>
+                </div>
+                <i class="bi bi-exclamation-octagon-fill stat-icon text-danger"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Card 6: Total Expenditure -->
+    <div class="col-xl{{ '-2' if can_see_ai else '' }} col-md-4 col-sm-6">
+        <div class="card stat-card stat-expenditure h-100">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-title">Total Expenditure</div>
+                    <div class="stat-value text-dark" style="font-size: 1.35rem;" id="card-total-expenditure">₹0</div>
+                </div>
+                <i class="bi bi-currency-rupee stat-icon text-secondary"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Section 10: Charts Row -->
+<div class="row g-3 mb-4">
+    <!-- Chart 1: Project Status Chart -->
+    <div class="col-lg-{{ 4 if can_see_ai else 6 }} col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-pie-chart-fill text-primary me-2"></i>1. Project Status</span>
+                <span class="badge bg-light text-muted">Chart.js</span>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center" style="position: relative; height: 260px;">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 2: Estimated Cost vs Actual Expenditure -->
+    <div class="col-lg-{{ 4 if can_see_ai else 6 }} col-md-6">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-bar-chart-line-fill text-primary me-2"></i>2. Estimated Cost vs Actual Exp.</span>
+                <span class="badge bg-light text-muted">in ₹ Lakhs</span>
+            </div>
+            <div class="card-body" style="position: relative; height: 260px;">
+                <canvas id="costComparisonChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart 3: Risk Distribution -->
+    <div class="col-lg-4 col-md-12 ai-only">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-bold"><i class="bi bi-shield-shaded text-primary me-2"></i>3. Risk Distribution</span>
+                <span class="badge bg-light text-muted">Low / Med / High</span>
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center" style="position: relative; height: 260px;">
+                <canvas id="riskDistributionChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Attention Table: Critical High-Risk Road Works -->
+<div class="card mb-4 ai-only">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+            <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>
+            <span class="fw-bold">Immediate Attention: High-Risk Road Works</span>
+        </div>
+        <a href="/projects?risk_level=HIGH" class="btn btn-outline-danger btn-sm">
+            View All High-Risk Projects <i class="bi bi-arrow-right ms-1"></i>
+        </a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>Work ID</th>
+                    <th>Description</th>
+                    <th>Road Type</th>
+                    <th>Location</th>
+                    <th>Expenditure</th>
+                    <th>Risk Score</th>
+                    <th>Risk Reasons</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody id="high-risk-preview-tbody">
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">
+                        <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                        Loading dashboard data...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}
