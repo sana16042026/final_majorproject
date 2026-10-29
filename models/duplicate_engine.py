@@ -206,7 +206,9 @@ def run_duplicate_analysis(projects_data):
 
             score = (50.0 * text + 15.0 * same_place + 10.0 * same_constituency + 5.0 * same_road
                      + 10.0 * length_close + 10.0 * cost_close)
-            score = np.where(valid, score, -1.0)
+            # Use the same published precision for selection, classification and storage.
+            # Otherwise 79.99999 may display as 80 while still being classified below 80.
+            score = np.where(valid, np.round(score, 1), -1.0)
 
             k = min(TOP_K_PER_PROJECT, g)
             top = np.argpartition(-score, k - 1, axis=1)[:, :k] if g > k else np.tile(np.arange(g), (r1 - r0, 1))

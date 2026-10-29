@@ -329,7 +329,7 @@ function riskBreakdownHTML(data) {
     </tbody></table></div><p class="fw-bold">${data.components.map(row=>Number(row.points)).join(' + ')} = ${Number(data.uncapped_score)} points</p>
     ${data.cap_adjustment?`<p>Scores are capped at 100: ${Number(data.uncapped_score)} ${Number(data.cap_adjustment)} = ${Number(data.calculated_score)}.</p>`:''}
     <p>Final score: <strong>${Number(data.calculated_score)}/100</strong>. Category: <strong>${riskEsc(data.risk_level)}</strong>. LOW &lt;40; MEDIUM 40–&lt;70; HIGH ≥70.</p>
-    <p class="small text-muted mb-0">Rule contributions are added and the combined score is capped at 100. Parameters with zero points are shown explicitly. Unavailable values are not evidence of safety. This is a rule-based review score, not a fraud probability.</p>`;
+    <p class="small text-muted mb-0">The parameter maxima total ${data.components.reduce((total,row)=>total+Number(row.maximum_points),0)} points. Contributions are added and the final score is capped at 100. Parameters with zero points are shown explicitly. Unavailable values are not evidence of safety. This is a rule-based review score, not a fraud probability.</p>`;
 }
 function toggleRiskBreakdown(open) {
     const panel=document.getElementById('risk-breakdown-panel');

@@ -1,0 +1,20 @@
+{
+  "passed": 11,
+  "checks": [
+    "Final application has 15000 source, financial and risk records",
+    "Final application uses 24 source columns without coordinate data",
+    "Every final saved risk score matches its recalculated contributions",
+    "Final application exposes all 28 states",
+    "Details/report score consistency: R-00001",
+    "Correct grading maxima: R-00001",
+    "Details/report score consistency: R-03837",
+    "Correct grading maxima: R-03837",
+    "Details/report score consistency: R-05637",
+    "Correct grading maxima: R-05637",
+    "Final report download works"
+  ],
+  "database": "drishti_final_major",
+  "records": 15000,
+  "columns": 24,
+  "states": 28
+}

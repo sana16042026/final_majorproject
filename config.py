@@ -47,7 +47,7 @@ class Config:
     DB_PORT = DB_PORTS[0]          # updated automatically once a connection works
     DB_USER = os.getenv('DB_USER', 'root')
     DB_PASS = os.getenv('DB_PASS', '')
-    DB_NAME = os.getenv('DB_NAME', 'drishti_master_road')
+    DB_NAME = os.getenv('DB_NAME', 'drishti_final_major')
 
     # Web server
     APP_HOST = os.getenv('APP_HOST', '127.0.0.1')

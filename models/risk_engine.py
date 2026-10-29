@@ -73,45 +73,46 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
     component('delay', 'Recorded schedule delay', f'{delay_days} days',
         '>120 days: +25; >60 to 120: +15; >20 to 60: +8; ≤20: +0.', 25, project.get('delay_days') is not None)
 
-    # 4. Physical-Financial Progress Gap (up to +20 points)
+    # 4. Physical-Financial Progress Gap (up to +10 points)
     phy_progress = float(project.get('physical_progress_pct', 0.0) or 0.0)
     fin_progress = float(project.get('financial_progress_pct', 0.0) or 0.0)
-    gap = float(project.get('physical_financial_gap_pct', 0.0) or (fin_progress - phy_progress))
+    raw_gap = project.get('physical_financial_gap_pct')
+    gap_available = raw_gap is not None or (project.get('physical_progress_pct') is not None and project.get('financial_progress_pct') is not None)
+    gap = float(raw_gap) if raw_gap is not None else fin_progress - phy_progress
 
-    if gap > 25:
-        score += 20.0
-        reasons.append(f"Large physical-financial gap ({gap:.1f}%): Financial percentage significantly exceeds physical progress; verify the source percentage basis")
-    elif gap > 15:
-        score += 12.0
-        reasons.append(f"Moderate physical-financial gap ({gap:.1f}%)")
-    elif gap > 5:
-        score += 5.0
-        reasons.append(f"Slight physical-financial mismatch ({gap:.1f}%)")
+    if gap_available and gap > 25:
+        score += 10.0
+        reasons.append(f"Large physical-financial gap ({gap:.1f} percentage points): Financial percentage significantly exceeds physical progress; verify the source percentage basis")
+    elif gap_available and gap > 15:
+        score += 6.0
+        reasons.append(f"Moderate physical-financial gap ({gap:.1f} percentage points)")
+    elif gap_available and gap > 5:
+        score += 2.5
+        reasons.append(f"Slight physical-financial mismatch ({gap:.1f} percentage points)")
 
     component('progress_gap', 'Financial minus physical progress', f'{gap:g} percentage points',
-        '>25 points: +20; >15 to 25: +12; >5 to 15: +5; ≤5: +0.', 20,
-        project.get('physical_financial_gap_pct') is not None or
-        (project.get('physical_progress_pct') is not None and project.get('financial_progress_pct') is not None))
+        '>25 points: +10; >15 to 25: +6; >5 to 15: +2.5; ≤5: +0.', 10,
+        gap_available)
 
-    # 5. Duplicate / overlap warning (up to +10 points)
+    # 5. Duplicate / overlap warning (up to +20 points)
     if duplicate_matches is not None:
         # Location-aware check: only pairs in the same district with extra evidence.
         if duplicate_matches:
             top = duplicate_matches[0]          # strongest match first
             if top['classification'] == 'Likely duplicate':
-                score += 10.0
+                score += 20.0
                 reasons.append(
                     f"Likely duplicate of Project {top['other_work_id']} in the same district "
                     f"({top['evidence_score']:.0f}/100): {top['evidence']}")
             else:
-                score += 5.0
+                score += 10.0
                 reasons.append(
                     f"Possible overlap with Project {top['other_work_id']} in the same district "
                     f"({top['evidence_score']:.0f}/100): {top['evidence']}")
     elif nlp_matches and len(nlp_matches) > 0:
         # Fallback: description-only match (ignores location)
         top_match = nlp_matches[0]
-        score += 10.0
+        score += 20.0
         reasons.append(f"Similar road work description detected with Project {top_match['matched_work_id']} ({top_match['similarity_pct']}%)")
 
     duplicate_value = 'No retained contextual match'
@@ -120,8 +121,8 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
     elif duplicate_matches is None and nlp_matches:
         duplicate_value = f"Wording-only fallback — {nlp_matches[0]['matched_work_id']}"
     component('duplicate', 'Similar / duplicate work evidence', duplicate_value,
-        'Strongest contextual match only: likely duplicate +10; possible overlap +5; no match +0. Wording-only fallback +10 only when contextual results are unavailable.',
-        10, duplicate_matches is not None or bool(nlp_matches))
+        'Strongest contextual match only: likely duplicate +20; possible overlap +10; no match +0. Wording-only fallback +20 only when contextual results are unavailable.',
+        20, duplicate_matches is not None or bool(nlp_matches))
 
     # 6. Low Bidder Competition / Single Bidder (+10 points)
     num_bidders = int(project.get('number_of_bidders', 0) or 0)

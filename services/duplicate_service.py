@@ -76,7 +76,7 @@ def get_project_duplicates(work_id, limit=3):
                    CASE WHEN d.work_id_1 = %s THEN d.work_id_2 ELSE d.work_id_1 END AS other_work_id
             FROM `duplicate_analysis` d
             WHERE d.work_id_1 = %s OR d.work_id_2 = %s
-            ORDER BY d.evidence_score DESC
+            ORDER BY d.evidence_score DESC, d.pair_id ASC
             LIMIT %s
         """, [work_id, work_id, work_id, limit])
     except Exception:

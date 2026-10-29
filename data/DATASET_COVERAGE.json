@@ -5,7 +5,7 @@
   "records": 15000,
   "states": 28,
   "districts": 138,
-  "note": "15,000 synthetic demonstration records, balanced across all 28 states. 20 states have 536 records and 8 have 535. Five selected districts per state, except Goa (all 3 actual districts). Union territories are outside this dataset. Equal state allocation is for software demonstrations, not national statistical representativeness. Numerical/date values are retained synthetic examples from the supplied workbook and do not describe actual works in the reassigned districts. GPS fields are blank because no verified road coordinates exist.",
+  "note": "15,000 synthetic demonstration records, balanced across all 28 states. 20 states have 536 records and 8 have 535. Five selected districts per state, except Goa (all 3 actual districts). Union territories are outside this dataset. Equal state allocation is for software demonstrations, not national statistical representativeness. Numerical/date values are retained synthetic examples from the supplied workbook and do not describe actual works in the reassigned districts. Latitude and Longitude columns are omitted; contextual location checks use administrative and description fields.",
   "coverage": [
     {
       "state": "Andhra Pradesh",
@@ -341,5 +341,35 @@
       },
       "source": "https://igod.gov.in/sg/WB/E042/organizations"
     }
+  ],
+  "columns": [
+    "Work_ID",
+    "Work_Title",
+    "Work_Description",
+    "Work_Type",
+    "Road_Type",
+    "State",
+    "District",
+    "Constituency",
+    "Implementing_Agency_IDA",
+    "Vendor_Name",
+    "Road_Length_KM",
+    "Estimated_Cost_INR_Crore",
+    "Sanctioned_Amount_INR_Crore",
+    "Expenditure_Amount_INR_Crore",
+    "Cost_Per_KM_INR_Crore",
+    "Payment_Status",
+    "Start_Date",
+    "Expected_Completion_Date",
+    "Completion_Date",
+    "Progress_Percentage",
+    "Financial_Percentage",
+    "Invested_Amount_INR",
+    "Elected_MP",
+    "Progress_Basis"
+  ],
+  "formats": [
+    "xlsx",
+    "csv"
   ]
 }

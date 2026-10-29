@@ -30,3 +30,7 @@ Thumbs.db
 
 # Archive-specific manifest; no longer current after edits
 FILE_HASHES.json
+
+# Office lock files and temporary files
+~$*
+*.tmp

@@ -18,7 +18,7 @@ class MasterDatasetTests(unittest.TestCase):
         self.assertEqual(first.length_m,1950)
         self.assertEqual(first.delay_days,29)
         self.assertEqual(first.physical_progress_pct,100)
-        self.assertEqual(len(json.loads(first.source_json)),26)
+        self.assertEqual(len(json.loads(first.source_json)),24)
 
     def test_delays_and_missing_dates(self):
         fixtures=[
