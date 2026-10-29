@@ -1,6 +1,6 @@
 """Real-MySQL integration tests. Uses only its own dedicated validation schema."""
 import os
-os.environ['DB_NAME']='drishti_master_validation_v3'
+os.environ['DB_NAME']='drishti_balanced_states_validation'
 import compileall
 import json
 from pathlib import Path
@@ -44,11 +44,9 @@ def main():
     check(abs(stored['R-00001']['actual_expenditure']-5.46*10_000_000)<.01,'Crore source values converted to rupees correctly')
     check(all(len(json.loads(r['source_json']))==26 for r in project_rows),'Every original workbook field preserved')
     check(stored['R-09262']['financial_progress_pct']==116.89 and stored['R-09262']['physical_financial_gap_pct']==16.89,'Financial progress over 100 percent retained as valid overrun evidence')
-    counts={t:query_db('SELECT COUNT(*) n FROM '+t,one=True)['n'] for t in ['road_projects','ml_analysis','risk_analysis','nlp_analysis','duplicate_analysis','predictions']}
-    check(counts['ml_analysis']==counts['risk_analysis']==counts['predictions']==15000,'Financial, risk and prediction results persisted for each work')
+    counts={t:query_db('SELECT COUNT(*) n FROM '+t,one=True)['n'] for t in ['road_projects','ml_analysis','risk_analysis','nlp_analysis','duplicate_analysis']}
+    check(counts['ml_analysis']==counts['risk_analysis']==15000,'Financial and risk results persisted for each work')
     check(counts['nlp_analysis']>0 and counts['duplicate_analysis']>0,'Both text similarity and contextual duplicates executed')
-    predicted=query_db('SELECT * FROM predictions')
-    check(all(r['delay_likely']==int(r['predicted_delay_days']>30) and r['overrun_likely']==int(r['predicted_overrun_pct']>15) for r in predicted),'Prediction flags use documented day and overrun thresholds')
     ml=query_db('SELECT * FROM ml_analysis')
     check(len({r['anomaly_score'] for r in ml})>1,'Financial scores have real variation')
     dashboard=client.get('/api/dashboard').get_json()
@@ -58,8 +56,7 @@ def main():
     check(sum(dashboard['charts']['risk_chart']['data'])==15000,'Risk chart includes current database records')
     projects=client.get('/api/projects?search=R-00001').get_json()
     check(projects['total']==1 and projects['projects'][0]['delay_days']==29,'Searchable project table shows correct delay')
-    for path in ['/api/filters','/api/risk-analysis','/api/risk-analysis/projects?level=HIGH','/api/predictions/summary',
-                 '/api/predictions/projects?kind=all','/api/duplicates/summary','/api/duplicates/projects?kind=all',
+    for path in ['/api/filters','/api/risk-analysis','/api/risk-analysis/projects?level=HIGH','/api/duplicates/summary','/api/duplicates/projects?kind=all',
                  '/api/alerts','/api/projects/R-00001','/api/reports/project/R-00001','/api/reports/summary']:
         r=client.get(path)
         check(r.status_code==200,'API '+path)
@@ -76,8 +73,7 @@ def main():
     with patch('services.data_processor._insert',side_effect=RuntimeError('Simulated storage failure')), \
          patch('services.data_processor.run_nlp_similarity_analysis',return_value=([],{})), \
          patch('services.data_processor.run_ml_anomaly_detection',return_value=([],{})), \
-         patch('services.data_processor.run_duplicate_analysis',return_value=([],{})), \
-         patch('services.data_processor.run_prediction_analysis',return_value=([],{})):
+         patch('services.data_processor.run_duplicate_analysis',return_value=([],{})):
         failed=reprocess_current_dataset()
     check(not failed['success'] and query_db('SELECT COUNT(*) n FROM road_projects',one=True)['n']==15000,'Failed refresh rolls back without losing published data')
     # The rerun endpoint recalculates delays and every dependent result together.

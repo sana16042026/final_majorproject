@@ -158,7 +158,7 @@ function renderHighRiskPreview(projects) {
                 <td><small class="text-muted">${p.district}, ${p.state}</small></td>
                 <td class="fw-semibold">${formatINR(p.actual_expenditure)}</td>
                 <td>
-                    <span class="badge bg-danger fs-6">${p.risk_score}/100</span>
+                    ${riskScoreButton(p.work_id,p.risk_score,'bg-danger')}
                 </td>
                 <td class="small text-danger text-truncate" style="max-width: 250px;" title="${p.risk_reason}">
                     <i class="bi bi-exclamation-circle-fill me-1"></i>${primaryReason}

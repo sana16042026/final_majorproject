@@ -1,130 +1,115 @@
-# DRISHTI AI — Master Road Workbook Update
+# DRISHTI AI — Road-work Monitoring
 
-This is the existing `major-project (3).zip` app, updated for the supplied
-`data/Master_Road_Work_Dataset_15000.xlsx`. It retains its existing dashboard,
-financial anomaly detection, description similarity, contextual duplicate checks,
-risk rules, delay/cost outcome estimates, roles, and reports. Earlier chat prompts
-were not used as additional requirements.
+The project uses a clearly labelled, balanced synthetic 15,000-record master workbook and retains six pages:
+Dashboard, Road Projects, Upload Dataset, Financial Analysis, Similar & Duplicate
+Works, and Risk Analysis. Reports are available through Generate Report actions.
+
+## Analysis components
+
+1. Isolation Forest financial anomaly detection.
+2. TF-IDF/cosine description similarity.
+3. Location-aware contextual duplicate detection.
+4. Deterministic risk scoring, with clickable parameter-by-parameter explanations.
+
+The gradient-boosted delay/cost-overrun estimator has been removed. Actual delay,
+cost overrun and progress gap remain calculated from source records, not estimated.
 
 ## Run on Windows
 
-Start MySQL from your XAMPP control panel. Open PowerShell in this extracted folder:
+Start MySQL/MariaDB in XAMPP. In this project folder:
 
 ```powershell
 py -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+Set your local DB_PASS and SECRET_KEY in .env. For a fresh database:
+
+```powershell
 .\.venv\Scripts\python.exe import_master.py
+```
+
+For an existing database, run `python import_master.py` once to replace its old
+10-state dataset and rebuild all analyses using the balanced workbook. This replaces
+the current imported project records. Keep a database backup if they include your own uploads.
+Start the website:
+
+```powershell
 .\.venv\Scripts\python.exe run.py
 ```
 
-Open http://127.0.0.1:5000 and log in as `admin` / `admin123`.
-Other existing demo accounts are created by init_db.py. Your real MySQL credentials
-can be set in `.env`; defaults are local root with an empty password. The updated
-app uses a separate database named `drishti_master_road`, so it does not replace
-your old application database. Importing replaces records within this database.
-Use your configured password if local root does not have an empty password.
+Open http://127.0.0.1:5000. Demo administrator: admin / admin123. Existing local
+.env credentials are preserved when updating the working project. The ZIP excludes
+.env, virtual environments, Git metadata and runtime uploads.
 
-The supplied `.env` points the optional auto-start binary to D:\xampp. However,
-copying XAMPP alone does not migrate MySQL: its my.ini may still point to C:.
-This update does not change your MySQL installation or move database files.
-Start a working MySQL server normally; the app connects to localhost:3306.
+## Recorded calculations
 
-Startup automatically imports the bundled master only if the app database is
-empty. On later dates, startup refreshes delay and dependent analysis. While the
-app stays running, use **Refresh delays & all analysis** to advance the reporting
-date. No new synthetic sample dataset is generated.
+- Completed delay: max(0, actual completion date − expected completion date).
+- Unfinished delay: max(0, analysis date − expected completion date).
+- Missing or inconsistent dates: Unavailable.
+- Overrun: max(0, (expenditure − sanction) / sanction × 100).
+- Progress gap: source financial percentage − source physical percentage.
+- Crore source amounts are converted once to INR; kilometres to metres.
+- Original source fields are preserved in source_json. Physical and financial
+  progress values are imported from the workbook. Financial progress above 100%
+  remains valid overrun evidence. Missing contract/bidder figures are unavailable.
 
-## Dataset mapping
+The three analysis dashboards group four underlying components. There is no
+recorded-versus-predicted panel, estimation tab, training control, prediction API,
+or prediction dependency in imports/reprocessing/reports. Fresh initialization
+does not create estimator tables. Previously existing legacy estimator tables are
+left untouched but are no longer read or written; source data is preserved.
 
-The single supplied workbook has 15,000 records and 26 fields. `Work_Description`
-maps to description; `Vendor_Name` to vendor_id; `Elected_MP` to mp_id;
-`Progress_Percentage` to physical progress; `Financial_Percentage` to financial
-progress. Financial progress above 100% is retained as legitimate overrun evidence;
-physical progress must remain between 0 and 100%. Road_Length_KM is converted to length_m. Four financial columns ending
-in INR_Crore are multiplied by 10,000,000 once, preserving the existing app's
-INR storage and currency-formatting contract. Legacy normalized columns are
-already INR and are not multiplied again during reprocessing.
+## Review results
 
-All original columns and original units are preserved in source_json, including
-Invested_Amount_INR, Progress_Basis, coordinates, payment status, and source dates.
-Original values can be inspected in API/HTML reports. The original workbook is
-also downloadable from Upload. Old bundled uploads, sample generator, archived
-templates and machine-specific virtual environments are excluded from the package.
-
-Unavailable tender/agreement/final amounts or bidder counts stay NULL; they are
-not fabricated from other figures. Financial model features use the available
-source and documented derived metrics. No ground-truth fraud labels are created.
-
-## Delayed days
-
-Calculations use Asia/Kolkata calendar dates, with `analysis_as_of` stored per work:
-
-- Completed with valid actual and expected dates: max(0, completion − expected).
-- Unfinished with a valid expected date: max(0, reporting date − expected).
-- Completed with 100% progress but no actual completion date: Unavailable.
-- Missing or inconsistent dates (e.g. expected before start): Unavailable.
-
-`Not Completed`, dashes and invalid date text are treated as missing dates.
-Completed work stays Completed even if it finished late; its delay is still shown.
-Unfinished work with any positive overdue days is Delayed, otherwise Ongoing.
-Completely absent status evidence gives Unavailable. Original date fields,
-delay_basis and analysis_as_of are persisted and shown in Details and reports.
-R-00001 in this workbook is 29 days late (2023-04-27 versus 2023-03-29).
-
-## Processing and models
-
-Uploads map/clean source values, calculate delay/status/cost overrun/progress gap,
-run the existing modules, and atomically replace source records and ALL derived
-tables. An insertion failure rolls back the entire refresh. Rerun buttons refresh
-the complete pipeline, preventing stale risk/prediction results after dates change.
-
-Description similarity is computed in small blocks rather than a full 15,000²
-dense matrix; the existing strongest-1000 output cap is retained. Contextual
-duplicates retain the existing same-location/evidence rules and 20,000-pair cap.
-Candidate lists are bounded, not exhaustive proof of duplicate expenditure.
-
-Existing custom Isolation Forest and risk thresholds remain in place. The
-outcome flags use the documented fixed thresholds (>30 days, >15% overrun),
-replacing a prevalence cutoff that could flag zero-overrun estimates.
-The
-prediction module estimates observed date-derived delay and observed cost overrun
-using its existing five-fold validation. Unfinished-work overdue days are current
-observations, NOT final completion labels or a guarantee of future delay.
-Rows with unavailable targets are excluded from prediction fitting. The source
-Progress_Basis itself describes synthetic values for some records, so metrics
-measure this provided dataset and do not establish real-world fraud accuracy.
-
-## Reports
-
-Details, project lists, dashboard, risk tables and reports use the current database.
-The Reports page supports browser Print/PDF plus **Download report**, which returns
-a standalone HTML report including original source values, calculated delay,
-analysis date, financial/risk evidence, duplicate matches and model estimates.
+Isolation Forest uses the existing custom NumPy implementation and 15% review
+fraction. Description similarity keeps its strongest 1,000 pairs; contextual
+duplicates keep their existing evidence rules and 20,000-pair cap. Risk uses the
+existing rule points, capped at 100: LOW <40, MEDIUM 40–<70, HIGH ≥70. Clicking a
+score shows all seven parameters, including zero-point and unavailable evidence.
+These are human-review signals, not fraud probabilities or proof of wrongdoing.
+The supplied Progress_Basis field includes synthetic entries, so the workbook is
+not presented as independently verified government data.
 
 ## Tests
 
 ```powershell
 .\.venv\Scripts\python.exe -m unittest test_master_dataset -v
 .\.venv\Scripts\python.exe -u test_e2e.py
+.\.venv\Scripts\python.exe validate_six_pages.py
 ```
 
-Fast tests cover mapping, missing/invalid values, all delay cases, and daily
-unfinished-delay increments. The real MySQL suite uses its own dedicated schema
-`drishti_master_validation_v3`, uploads all 15,000 rows through Flask, independently
-checks every date calculation and currency units, tests routes/filters/reports,
-simulates failure to verify rollback, and reprocesses to check repeatability.
-`TEST_RESULTS.json` records an actual successful full run. See TEST_REPORT.md for
-executed checks, browser verification and limitations.
+The end-to-end suite uses its own drishti_balanced_states_validation schema,
+not the application database. It imports and reprocesses all 15,000 records and
+checks actual calculations, rollback, reports and access. The page validator is
+read-only against the configured application database and requires Node.js for
+syntax checks. See DATASET_UPDATE_REPORT.md for the executed checks and limitations.
 
-## Configuration after cloning
+## Balanced synthetic dataset (29 October 2026)
 
-The repository excludes local passwords, Python environments, caches, and runtime
-uploads. Copy the example configuration before following the setup steps above:
+All 28 Indian states are included: 20 have 536 records and 8 have 535 records.
+There are 138 state/district combinations. Five selected districts are used for
+each state except Goa, where all three actual districts are included: North Goa,
+South Goa and Kushavati. Union territories are outside the requested 28-state scope.
+Within each state, district record counts differ by at most one.
 
-```powershell
-Copy-Item .env.example .env
-```
+All records are synthetic demonstration data. The supplied workbook's numerical
+and date examples are preserved. State/district assignments, descriptions, sites,
+constituencies, implementing agencies and representative labels were regenerated
+consistently with fixed seed 20261029. They are not actual observations for these
+districts. GPS coordinates are blank because no verified road coordinates exist.
+Every source record is marked SYNTHETIC in Progress_Basis. State coverage and
+methodology are documented in the workbook and data/DATASET_COVERAGE.json.
 
-Set DB_PASS to your local MariaDB/MySQL password. The supplied master workbook
-remains in data/. HTML pages are in Frontend/; the application also accepts the
-original templates/ folder name.
+State balance helps demonstrate filtering across India; it does not establish
+real-world representativeness or fraud-detection accuracy. The district names
+were checked against government directories, including https://igod.gov.in/sg/district/states
+and https://www.goa.gov.in/know-goa/districts-of-goa/.
+
+The original 26-column import format and work IDs remain compatible. All saved
+ML, wording, contextual-duplicate and risk results must be rebuilt after import,
+because new geography and descriptions change the comparison groups. Actual
+delay, overrun and gap formulas are unchanged. The removed prediction module
+remains removed. Run `python validate_dataset_coverage.py` to check the workbook,
+database, all state/district filters and reports against this coverage manifest.

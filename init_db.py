@@ -124,28 +124,6 @@ def init_database():
                 `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
             """)
-            # 6. predictions table (delay / cost-overrun model output per project)
-            cursor.execute("""
-            CREATE TABLE IF NOT EXISTS `predictions` (
-                `prediction_id` INT AUTO_INCREMENT PRIMARY KEY,
-                `work_id` VARCHAR(50),
-                `predicted_delay_days` DOUBLE DEFAULT 0,
-                `predicted_overrun_pct` DOUBLE DEFAULT 0,
-                `delay_likely` TINYINT(1) DEFAULT 0,
-                `overrun_likely` TINYINT(1) DEFAULT 0,
-                `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                INDEX (`work_id`)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-            """)
-
-            # 7. prediction_summary table (model accuracy of the latest training run)
-            cursor.execute("""
-            CREATE TABLE IF NOT EXISTS `prediction_summary` (
-                `summary_id` INT AUTO_INCREMENT PRIMARY KEY,
-                `metrics_json` LONGTEXT,
-                `trained_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-            """)
             # 8. duplicate_analysis table (location-aware duplicate / overlap pairs)
             cursor.execute("""
             CREATE TABLE IF NOT EXISTS `duplicate_analysis` (
@@ -179,7 +157,7 @@ def init_database():
                      district, mp_id, vendor_id)
                 )
             print("All required tables created successfully: "
-                  "road_projects, ml_analysis, nlp_analysis, risk_analysis, users, predictions, prediction_summary, "
+                  "road_projects, ml_analysis, nlp_analysis, risk_analysis, users, "
                   "duplicate_analysis, duplicate_summary.")
             print("Demo login accounts ready (admin, admin_pune, ministry, auditor, vendor, citizen).")
         conn.commit()

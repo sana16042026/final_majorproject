@@ -15,7 +15,7 @@
             </div>
             <div class="card-body">
                 <p class="small text-muted mb-3">
-                    Search and select any road project by Work ID to generate an official comprehensive audit report with ML risk breakdown, predicted outcome and location-aware duplicate check.
+                    Search and select any road project by Work ID to generate an official comprehensive audit report with ML risk breakdown, calculated delay and location-aware duplicate check.
                 </p>
                 <div class="input-group mb-3">
                     <input type="text" id="report-search-id" class="form-control" placeholder="Enter Work ID (e.g. RD1001)...">
@@ -65,28 +65,16 @@
                     </div>
                 </div>
                 <div class="row g-2 mb-3 text-center">
-                    <div class="col-3">
+                    <div class="col-6">
                         <div class="p-2 border rounded bg-light">
                             <div class="small text-muted">Likely Duplicates</div>
                             <div class="fs-5 fw-bold text-danger" id="summary-likely-duplicates">0</div>
                         </div>
                     </div>
-                    <div class="col-3">
+                    <div class="col-6">
                         <div class="p-2 border rounded bg-light">
                             <div class="small text-muted">Possible Overlaps</div>
                             <div class="fs-5 fw-bold text-warning" id="summary-possible-overlaps">0</div>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="p-2 border rounded bg-light">
-                            <div class="small text-muted">Delay Likely</div>
-                            <div class="fs-5 fw-bold text-danger" id="summary-likely-delayed">0</div>
-                        </div>
-                    </div>
-                    <div class="col-3">
-                        <div class="p-2 border rounded bg-light">
-                            <div class="small text-muted">Overrun Likely</div>
-                            <div class="fs-5 fw-bold text-warning" id="summary-likely-overrun">0</div>
                         </div>
                     </div>
                 </div>

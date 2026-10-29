@@ -4,8 +4,8 @@ document.addEventListener('DOMContentLoaded', () => {
     loadRiskData();
     loadAlertsData();
 
-    document.getElementById('btn-rerun-nlp').addEventListener('click', rerunNLP);
-    document.getElementById('btn-rerun-ml').addEventListener('click', rerunML);
+    document.getElementById('btn-rerun-nlp')?.addEventListener('click', rerunNLP);
+    document.getElementById('btn-rerun-ml')?.addEventListener('click', rerunML);
 });
 
 function loadRiskData() {
@@ -45,7 +45,7 @@ function renderHighRiskTable(projects) {
                 <td class="${p.cost_overrun_pct > 15 ? 'text-danger fw-bold' : 'text-muted'}">${p.cost_overrun_pct}%</td>
                 <td class="${p.delay_days > 45 ? 'text-danger fw-bold' : 'text-muted'}">${p.delay_days == null ? 'Unavailable' : p.delay_days+' d'}</td>
                 <td class="${p.physical_financial_gap_pct > 15 ? 'text-danger fw-bold' : 'text-muted'}">${p.physical_financial_gap_pct}%</td>
-                <td><span class="badge bg-danger fs-6">${p.risk_score} / 100</span></td>
+                <td>${riskScoreButton(p.work_id,p.risk_score,'bg-danger')}</td>
                 <td class="small text-danger text-truncate" style="max-width: 260px;" title="${p.risk_reason}">
                     <i class="bi bi-exclamation-triangle-fill me-1"></i>${reasonBadge}
                 </td>

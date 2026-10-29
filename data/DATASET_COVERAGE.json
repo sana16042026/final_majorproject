@@ -1,0 +1,345 @@
+{
+  "synthetic": true,
+  "created": "2026-10-29",
+  "seed": 20261029,
+  "records": 15000,
+  "states": 28,
+  "districts": 138,
+  "note": "15,000 synthetic demonstration records, balanced across all 28 states. 20 states have 536 records and 8 have 535. Five selected districts per state, except Goa (all 3 actual districts). Union territories are outside this dataset. Equal state allocation is for software demonstrations, not national statistical representativeness. Numerical/date values are retained synthetic examples from the supplied workbook and do not describe actual works in the reassigned districts. GPS fields are blank because no verified road coordinates exist.",
+  "coverage": [
+    {
+      "state": "Andhra Pradesh",
+      "records": 536,
+      "districts": {
+        "Visakhapatnam": 108,
+        "Krishna": 107,
+        "Guntur": 107,
+        "Tirupati": 107,
+        "Kurnool": 107
+      },
+      "source": "https://igod.gov.in/sg/AP/E042/organizations"
+    },
+    {
+      "state": "Arunachal Pradesh",
+      "records": 536,
+      "districts": {
+        "Papum Pare": 108,
+        "Tawang": 107,
+        "West Kameng": 107,
+        "East Siang": 107,
+        "Lower Subansiri": 107
+      },
+      "source": "https://igod.gov.in/sg/AR/E042/organizations"
+    },
+    {
+      "state": "Assam",
+      "records": 536,
+      "districts": {
+        "Kamrup Metropolitan": 108,
+        "Dibrugarh": 107,
+        "Jorhat": 107,
+        "Cachar": 107,
+        "Sonitpur": 107
+      },
+      "source": "https://igod.gov.in/sg/AS/E042/organizations"
+    },
+    {
+      "state": "Bihar",
+      "records": 536,
+      "districts": {
+        "Patna": 108,
+        "Gaya": 107,
+        "Muzaffarpur": 107,
+        "Bhagalpur": 107,
+        "Darbhanga": 107
+      },
+      "source": "https://igod.gov.in/sg/BR/E042/organizations"
+    },
+    {
+      "state": "Chhattisgarh",
+      "records": 536,
+      "districts": {
+        "Raipur": 108,
+        "Bilaspur": 107,
+        "Durg": 107,
+        "Bastar": 107,
+        "Korba": 107
+      },
+      "source": "https://igod.gov.in/sg/CG/E042/organizations"
+    },
+    {
+      "state": "Goa",
+      "records": 536,
+      "districts": {
+        "North Goa": 179,
+        "South Goa": 179,
+        "Kushavati": 178
+      },
+      "source": "https://igod.gov.in/sg/GA/E042/organizations"
+    },
+    {
+      "state": "Gujarat",
+      "records": 536,
+      "districts": {
+        "Ahmedabad": 108,
+        "Surat": 107,
+        "Vadodara": 107,
+        "Rajkot": 107,
+        "Gandhinagar": 107
+      },
+      "source": "https://igod.gov.in/sg/GJ/E042/organizations"
+    },
+    {
+      "state": "Haryana",
+      "records": 536,
+      "districts": {
+        "Gurugram": 108,
+        "Faridabad": 107,
+        "Hisar": 107,
+        "Panipat": 107,
+        "Ambala": 107
+      },
+      "source": "https://igod.gov.in/sg/HR/E042/organizations"
+    },
+    {
+      "state": "Himachal Pradesh",
+      "records": 536,
+      "districts": {
+        "Shimla": 108,
+        "Kangra": 107,
+        "Mandi": 107,
+        "Kullu": 107,
+        "Solan": 107
+      },
+      "source": "https://igod.gov.in/sg/HP/E042/organizations"
+    },
+    {
+      "state": "Jharkhand",
+      "records": 536,
+      "districts": {
+        "Ranchi": 108,
+        "East Singhbhum": 107,
+        "Dhanbad": 107,
+        "Bokaro": 107,
+        "Deoghar": 107
+      },
+      "source": "https://igod.gov.in/sg/JH/E042/organizations"
+    },
+    {
+      "state": "Karnataka",
+      "records": 536,
+      "districts": {
+        "Bengaluru Urban": 108,
+        "Mysuru": 107,
+        "Dakshina Kannada": 107,
+        "Belagavi": 107,
+        "Dharwad": 107
+      },
+      "source": "https://igod.gov.in/sg/KA/E042/organizations"
+    },
+    {
+      "state": "Kerala",
+      "records": 536,
+      "districts": {
+        "Thiruvananthapuram": 108,
+        "Ernakulam": 107,
+        "Kozhikode": 107,
+        "Thrissur": 107,
+        "Alappuzha": 107
+      },
+      "source": "https://igod.gov.in/sg/KL/E042/organizations"
+    },
+    {
+      "state": "Madhya Pradesh",
+      "records": 536,
+      "districts": {
+        "Bhopal": 108,
+        "Indore": 107,
+        "Gwalior": 107,
+        "Jabalpur": 107,
+        "Ujjain": 107
+      },
+      "source": "https://igod.gov.in/sg/MP/E042/organizations"
+    },
+    {
+      "state": "Maharashtra",
+      "records": 536,
+      "districts": {
+        "Pune": 108,
+        "Nagpur": 107,
+        "Nashik": 107,
+        "Thane": 107,
+        "Kolhapur": 107
+      },
+      "source": "https://igod.gov.in/sg/MH/E042/organizations"
+    },
+    {
+      "state": "Manipur",
+      "records": 536,
+      "districts": {
+        "Imphal East": 108,
+        "Imphal West": 107,
+        "Thoubal": 107,
+        "Bishnupur": 107,
+        "Churachandpur": 107
+      },
+      "source": "https://igod.gov.in/sg/MN/E042/organizations"
+    },
+    {
+      "state": "Meghalaya",
+      "records": 536,
+      "districts": {
+        "East Khasi Hills": 108,
+        "West Khasi Hills": 107,
+        "Ri Bhoi": 107,
+        "West Garo Hills": 107,
+        "East Garo Hills": 107
+      },
+      "source": "https://igod.gov.in/sg/ML/E042/organizations"
+    },
+    {
+      "state": "Mizoram",
+      "records": 536,
+      "districts": {
+        "Aizawl": 108,
+        "Lunglei": 107,
+        "Champhai": 107,
+        "Kolasib": 107,
+        "Serchhip": 107
+      },
+      "source": "https://igod.gov.in/sg/MZ/E042/organizations"
+    },
+    {
+      "state": "Nagaland",
+      "records": 536,
+      "districts": {
+        "Kohima": 108,
+        "Dimapur": 107,
+        "Mokokchung": 107,
+        "Wokha": 107,
+        "Mon": 107
+      },
+      "source": "https://igod.gov.in/sg/NL/E042/organizations"
+    },
+    {
+      "state": "Odisha",
+      "records": 536,
+      "districts": {
+        "Khordha": 108,
+        "Cuttack": 107,
+        "Puri": 107,
+        "Ganjam": 107,
+        "Sambalpur": 107
+      },
+      "source": "https://igod.gov.in/sg/OD/E042/organizations"
+    },
+    {
+      "state": "Punjab",
+      "records": 536,
+      "districts": {
+        "Amritsar": 108,
+        "Ludhiana": 107,
+        "Jalandhar": 107,
+        "Patiala": 107,
+        "Bathinda": 107
+      },
+      "source": "https://igod.gov.in/sg/PB/E042/organizations"
+    },
+    {
+      "state": "Rajasthan",
+      "records": 535,
+      "districts": {
+        "Jaipur": 107,
+        "Jodhpur": 107,
+        "Kota": 107,
+        "Udaipur": 107,
+        "Ajmer": 107
+      },
+      "source": "https://igod.gov.in/sg/RJ/E042/organizations"
+    },
+    {
+      "state": "Sikkim",
+      "records": 535,
+      "districts": {
+        "Gangtok": 107,
+        "Gyalshing": 107,
+        "Mangan": 107,
+        "Namchi": 107,
+        "Pakyong": 107
+      },
+      "source": "https://igod.gov.in/sg/SK/E042/organizations"
+    },
+    {
+      "state": "Tamil Nadu",
+      "records": 535,
+      "districts": {
+        "Chennai": 107,
+        "Coimbatore": 107,
+        "Madurai": 107,
+        "Tiruchirappalli": 107,
+        "Salem": 107
+      },
+      "source": "https://igod.gov.in/sg/TN/E042/organizations"
+    },
+    {
+      "state": "Telangana",
+      "records": 535,
+      "districts": {
+        "Hyderabad": 107,
+        "Ranga Reddy": 107,
+        "Medchal Malkajgiri": 107,
+        "Karimnagar": 107,
+        "Nizamabad": 107
+      },
+      "source": "https://igod.gov.in/sg/TS/E042/organizations"
+    },
+    {
+      "state": "Tripura",
+      "records": 535,
+      "districts": {
+        "West Tripura": 107,
+        "Sepahijala": 107,
+        "Gomati": 107,
+        "South Tripura": 107,
+        "North Tripura": 107
+      },
+      "source": "https://igod.gov.in/sg/TR/E042/organizations"
+    },
+    {
+      "state": "Uttar Pradesh",
+      "records": 535,
+      "districts": {
+        "Lucknow": 107,
+        "Varanasi": 107,
+        "Agra": 107,
+        "Prayagraj": 107,
+        "Kanpur Nagar": 107
+      },
+      "source": "https://igod.gov.in/sg/UP/E042/organizations"
+    },
+    {
+      "state": "Uttarakhand",
+      "records": 535,
+      "districts": {
+        "Dehradun": 107,
+        "Haridwar": 107,
+        "Nainital": 107,
+        "Almora": 107,
+        "Udham Singh Nagar": 107
+      },
+      "source": "https://igod.gov.in/sg/UK/E042/organizations"
+    },
+    {
+      "state": "West Bengal",
+      "records": 535,
+      "districts": {
+        "Kolkata": 107,
+        "Howrah": 107,
+        "Darjeeling": 107,
+        "Hooghly": 107,
+        "Nadia": 107
+      },
+      "source": "https://igod.gov.in/sg/WB/E042/organizations"
+    }
+  ]
+}

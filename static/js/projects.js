@@ -152,10 +152,7 @@ function renderProjectsTable(projects) {
 
     tbody.innerHTML = projects.map(p => {
         // Roles without AI access receive no risk_level (the Risk column is hidden for them)
-        const riskBadge = p.risk_level === undefined ? '' :
-                          p.risk_level === 'HIGH' ? '<span class="badge-risk-high">🔴 HIGH</span>' :
-                          p.risk_level === 'MEDIUM' ? '<span class="badge-risk-med">🟡 MED</span>' :
-                          '<span class="badge-risk-low">🟢 LOW</span>';
+        const riskBadge = p.risk_level === undefined ? '' : riskScoreButton(p.work_id,p.risk_score,p.risk_level==='HIGH'?'bg-danger':p.risk_level==='MEDIUM'?'bg-warning text-dark':'bg-success') + `<div class="small">${riskEsc(p.risk_level)}</div>`;
 
         const statusBadge = p.status === 'Completed' ? '<span class="badge bg-success">Completed</span>' :
                             p.status === 'Delayed' ? '<span class="badge bg-danger">Delayed</span>' :

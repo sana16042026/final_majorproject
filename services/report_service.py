@@ -1,4 +1,6 @@
 from db import query_db
+from models.risk_engine import calculate_project_risk
+from services.duplicate_service import get_project_duplicates, get_duplicate_summary
 
 def get_project_full_details(work_id):
     """
@@ -53,7 +55,19 @@ def get_project_full_details(work_id):
     reasons_str = proj.get('risk_reason') or ''
     reasons_list = [r.strip() for r in reasons_str.split('|') if r.strip()]
 
+    contextual = get_project_duplicates(work_id, limit=1)
+    if not contextual and get_duplicate_summary() is None:
+        contextual = None
+    model = dict(anomaly_detected=proj['anomaly_detected'], anomaly_score=proj['anomaly_score']) if proj['anomaly_detected'] is not None else None
+    wording = [dict(matched_work_id=m['matched_work_id'], similarity_pct=round(float(m['similarity_score'])*100,1)) for m in nlp_matches]
+    calculation = calculate_project_risk(proj, model, wording, contextual)
+    breakdown = dict(work_id=work_id, components=calculation['risk_breakdown'],
+        uncapped_score=calculation['uncapped_score'], calculated_score=calculation['risk_score'],
+        stored_score=proj['risk_score'], risk_level=proj['risk_level'], cap_adjustment=calculation['cap_adjustment'],
+        matches_stored_score=proj['risk_score'] is not None and abs(float(proj['risk_score'])-calculation['risk_score'])<0.000001)
+
     return {
+        'risk_breakdown': breakdown,
         'project': proj,
         'nlp_matches': nlp_matches,
         'reasons_list': reasons_list

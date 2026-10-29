@@ -41,8 +41,6 @@ function loadSummaryData() {
             setText('summary-nlp-count', s.nlp_similarity_count || 0);
             setText('summary-likely-duplicates', (s.likely_duplicates || 0).toLocaleString());
             setText('summary-possible-overlaps', (s.possible_overlaps || 0).toLocaleString());
-            setText('summary-likely-delayed', (s.likely_delayed || 0).toLocaleString());
-            setText('summary-likely-overrun', (s.likely_overrun || 0).toLocaleString());
 
             // Populate quick pills
             const pillsContainer = document.getElementById('quick-high-risk-pills');
@@ -55,9 +53,11 @@ function loadSummaryData() {
                 `).join('');
 
                 // Auto-load first high risk project
-                generateReport(hrList[0].work_id);
+                generateReport(new URLSearchParams(location.search).get('work_id') || hrList[0].work_id);
             } else {
                 pillsContainer.innerHTML = `<span class="small text-muted">No high-risk projects.</span>`;
+                const requested=new URLSearchParams(location.search).get('work_id');
+                if(requested) generateReport(requested);
             }
         })
         .catch(err => console.error('Failed to load summary data:', err));
@@ -93,7 +93,6 @@ function renderOfficialReport(reportData) {
     if (download) { download.href='/api/reports/project/'+encodeURIComponent(p.work_id)+'/download'; download.classList.remove('d-none'); }
     const nlpMatches = reportData.nlp_matches || [];
     const reasons = reportData.reasons_list || [];
-    const prediction = reportData.prediction || null;
     const locationDuplicates = reportData.location_duplicates || [];
 
     document.getElementById('report-title-heading').textContent = `Official Audit Report: ${p.work_id}`;
@@ -118,35 +117,6 @@ function renderOfficialReport(reportData) {
     }
 
     const reasonsListHtml = reasons.map(r => `<li class="mb-1">${reportEsc(r)}</li>`).join('') || '<li>Operating within normal project parameters.</li>';
-
-    // 5. Predicted outcome (learned from the uploaded dataset)
-    let predictionSection;
-    if (prediction) {
-        predictionSection = `
-            <table class="table table-sm table-borderless mb-2 small">
-                <thead>
-                    <tr class="text-muted"><th></th><th class="text-end">Recorded</th><th class="text-end">Predicted</th><th class="text-end">Outlook</th></tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Schedule delay</td>
-                        <td class="text-end">${p.delay_days == null ? 'Unavailable' : reportEsc(p.delay_days)+' days'}</td>
-                        <td class="text-end fw-bold">${Number(prediction.predicted_delay_days).toFixed(1)} days</td>
-                        <td class="text-end">${prediction.delay_likely == 1 ? '<span class="badge bg-danger">Delay likely</span>' : '<span class="badge bg-success">On track</span>'}</td>
-                    </tr>
-                    <tr>
-                        <td>Cost overrun</td>
-                        <td class="text-end">${reportEsc(p.cost_overrun_pct)}%</td>
-                        <td class="text-end fw-bold">${Number(prediction.predicted_overrun_pct).toFixed(1)}%</td>
-                        <td class="text-end">${prediction.overrun_likely == 1 ? '<span class="badge bg-warning text-dark">Overrun likely</span>' : '<span class="badge bg-success">Within range</span>'}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="small text-muted">Estimated by a model that learned from the other projects in the uploaded dataset
-            (cost, length, road type, progress, vendor and district track record). Targets describe observed values as of the analysis date, including unfinished-work overdue time.</div>`;
-    } else {
-        predictionSection = `<div class="small text-muted">No prediction is available yet. Upload a dataset (or re-train the model on the Risk Analysis page) to generate one.</div>`;
-    }
 
     // 6. Location-aware duplicate check
     let duplicateSection;
@@ -303,32 +273,23 @@ function renderOfficialReport(reportData) {
                 </div>
             </div>
 
-            <!-- 5. Predicted Outcome -->
-            <div class="card mb-4 border">
-                <div class="card-header bg-light py-2">
-                    <h6 class="mb-0 fw-bold text-uppercase small text-dark"><i class="bi bi-graph-up-arrow me-1"></i> 5. Cross-validated observed outcome estimates</h6>
-                </div>
-                <div class="card-body p-3">
-                    ${predictionSection}
-                </div>
-            </div>
-
             <!-- 6. Location-aware Duplicate Check -->
             <div class="card mb-4 border">
                 <div class="card-header bg-light py-2">
-                    <h6 class="mb-0 fw-bold text-uppercase small text-dark"><i class="bi bi-geo-alt-fill me-1"></i> 6. Location-aware Duplicate & Overlap Check</h6>
+                    <h6 class="mb-0 fw-bold text-uppercase small text-dark"><i class="bi bi-geo-alt-fill me-1"></i> 5. Location-aware Duplicate & Overlap Check</h6>
                 </div>
                 <div class="card-body p-3">
                     ${duplicateSection}
                 </div>
             </div>
 
+            ${riskBreakdownHTML(reportData.risk_breakdown)}
             <!-- 7. Final Risk Score & Explainable Reasons -->
             <div class="card border border-2 ${p.risk_level === 'HIGH' ? 'border-danger' : p.risk_level === 'MEDIUM' ? 'border-warning' : 'border-success'} bg-white">
                 <div class="card-header bg-light py-2 d-flex justify-content-between align-items-center">
-                    <h6 class="mb-0 fw-bold text-uppercase small text-dark"><i class="bi bi-shield-check me-1"></i> 7. Risk Scoring & Explainable Decision Logic</h6>
+                    <h6 class="mb-0 fw-bold text-uppercase small text-dark"><i class="bi bi-shield-check me-1"></i> 6. Risk Scoring & Explainable Decision Logic</h6>
                     <span class="fs-5 fw-bold ${p.risk_level === 'HIGH' ? 'text-danger' : p.risk_level === 'MEDIUM' ? 'text-warning' : 'text-success'}">
-                        Score: ${reportEsc(p.risk_score)} / 100
+                        ${riskScoreButton(p.work_id,p.risk_score,p.risk_level==='HIGH'?'bg-danger':p.risk_level==='MEDIUM'?'bg-warning text-dark':'bg-success')}
                     </span>
                 </div>
                 <div class="card-body p-3">

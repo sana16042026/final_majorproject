@@ -1,5 +1,5 @@
 {
-  "passed": 44,
+  "passed": 41,
   "checks": [
     "Anonymous API requires login",
     "Administrator login",
@@ -14,9 +14,8 @@
     "Crore source values converted to rupees correctly",
     "Every original workbook field preserved",
     "Financial progress over 100 percent retained as valid overrun evidence",
-    "Financial, risk and prediction results persisted for each work",
+    "Financial and risk results persisted for each work",
     "Both text similarity and contextual duplicates executed",
-    "Prediction flags use documented day and overrun thresholds",
     "Financial scores have real variation",
     "Dashboard total equals database",
     "Dashboard status count Completed",
@@ -27,8 +26,6 @@
     "API /api/filters",
     "API /api/risk-analysis",
     "API /api/risk-analysis/projects?level=HIGH",
-    "API /api/predictions/summary",
-    "API /api/predictions/projects?kind=all",
     "API /api/duplicates/summary",
     "API /api/duplicates/projects?kind=all",
     "API /api/alerts",
@@ -46,20 +43,19 @@
     "Citizen cannot modify analysis or view restricted reports",
     "All Python files compile"
   ],
-  "database": "drishti_master_validation_v3",
-  "analysis_as_of": "2026-10-28",
+  "database": "drishti_balanced_states_validation",
+  "analysis_as_of": "2026-10-29",
   "table_counts": {
     "road_projects": 15000,
     "ml_analysis": 15000,
     "risk_analysis": 15000,
     "nlp_analysis": 1000,
-    "duplicate_analysis": 20000,
-    "predictions": 15000
+    "duplicate_analysis": 20000
   },
   "status_counts": {
     "Completed": 12720,
-    "Ongoing": 1826,
-    "Delayed": 454
+    "Ongoing": 1816,
+    "Delayed": 464
   },
   "delay_min": 0,
   "delay_max": 237,

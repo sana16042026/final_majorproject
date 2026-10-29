@@ -46,12 +46,14 @@ function showToast(message, type = 'success') {
 }
 
 // Global View Project Details Modal Handler
-function viewProjectDetails(workId) {
+function viewProjectDetails(workId, showRisk = false) {
     const modalEl = document.getElementById('projectDetailsModal');
     if (!modalEl) return;
 
     const modal = new bootstrap.Modal(modalEl);
     document.getElementById('modal-work-id').textContent = workId;
+    const reportAction=document.getElementById('btn-modal-report');
+    if(reportAction) reportAction.href='/reports?work_id='+encodeURIComponent(workId);
     const bodyEl = document.getElementById('modal-body-content');
 
     bodyEl.innerHTML = `
@@ -70,6 +72,7 @@ function viewProjectDetails(workId) {
                 return;
             }
             renderProjectModalContent(res.data);
+            if (showRisk) toggleRiskBreakdown(true);
         })
         .catch(err => {
             bodyEl.innerHTML = `<div class="alert alert-danger">Network error: ${err.message}</div>`;
@@ -132,28 +135,6 @@ function renderProjectModalContent(data) {
         reasonsHtml = '<li>Operating within normal parameters.</li>';
     }
 
-    // Predicted outcome learned from the uploaded dataset (AI roles only)
-    const pr = data.prediction;
-    const predictionHtml = pr ? `
-                    <div class="mb-3 p-2 border rounded bg-light">
-                        <div class="small fw-bold text-dark mb-2">
-                            <i class="bi bi-graph-up-arrow me-1"></i> Observed Outcome Estimate
-                            <span class="fw-normal text-muted">(cross-validated on this dataset; not final completion forecasts)</span>
-                        </div>
-                        <div class="row g-2 small">
-                            <div class="col-md-6">
-                                Delay: <strong>${Number(pr.predicted_delay_days).toFixed(1)} days</strong>
-                                <span class="text-muted">(recorded: ${p.delay_days ?? 'Unavailable'} days)</span>
-                                ${pr.delay_likely == 1 ? '<span class="badge bg-danger ms-1">Delay likely</span>' : '<span class="badge bg-success ms-1">On track</span>'}
-                            </div>
-                            <div class="col-md-6">
-                                Cost overrun: <strong>${Number(pr.predicted_overrun_pct).toFixed(1)}%</strong>
-                                <span class="text-muted">(recorded: ${p.cost_overrun_pct}%)</span>
-                                ${pr.overrun_likely == 1 ? '<span class="badge bg-warning text-dark ms-1">Overrun likely</span>' : '<span class="badge bg-success ms-1">Within range</span>'}
-                            </div>
-                        </div>
-                    </div>` : '';
-
     // Location-aware duplicate / overlap matches (AI roles only)
     const locDups = data.location_duplicates || [];
     const locationDupHtml = locDups.length > 0 ? `
@@ -182,12 +163,14 @@ function renderProjectModalContent(data) {
                         </h6>
                         <div class="d-flex align-items-center gap-2">
                             <span class="small text-muted">Risk Score:</span>
-                            <span class="badge ${p.risk_score >= 70 ? 'bg-danger' : p.risk_score >= 40 ? 'bg-warning text-dark' : 'bg-success'} fs-6">
-                                ${p.risk_score} / 100
-                            </span>
+                            <button type="button" data-risk-toggle aria-controls="risk-breakdown-panel" aria-expanded="false" title="Show all awarded and zero-point parameters" class="badge border-0 ${p.risk_score >= 70 ? 'bg-danger' : p.risk_score >= 40 ? 'bg-warning text-dark' : 'bg-success'} fs-6">
+                                ${p.risk_score} / 100 <i class="bi bi-info-circle ms-1"></i>
+                            </button>
                         </div>
                     </div>
 
+                    <div class="small text-muted mb-2 text-end">Click the risk score to see how it was calculated.</div>
+                    <section id="risk-breakdown-panel" class="border rounded p-3 mb-3 bg-light" hidden tabindex="-1">${riskBreakdownHTML(data.risk_breakdown)}</section>
                     <div class="row g-2 mb-3">
                         <div class="col-md-6">
                             <div class="p-2 border rounded bg-light">
@@ -204,7 +187,6 @@ function renderProjectModalContent(data) {
                         </div>
                     </div>
 
-${predictionHtml}
 ${locationDupHtml}
                     <div>
                         <div class="small fw-bold text-dark mb-1">Risk Reasons & Explanation:</div>
@@ -329,3 +311,36 @@ ${aiSectionHtml}
 
     document.getElementById('modal-body-content').innerHTML = html;
 }
+
+// One shared score explanation, produced by the same backend function that awards points.
+function riskEsc(value) {
+    return String(value ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function riskScoreButton(workId,score,color='bg-success') {
+    if(score==null)return '<span class="text-muted">Unavailable</span>';
+    return `<button type="button" class="badge border-0 ${color} fs-6" data-risk-work-id="${riskEsc(workId)}" title="Show risk-score calculation" aria-label="Explain risk score ${Number(score)} for ${riskEsc(workId)}">${Number(score)}/100 <i class="bi bi-info-circle"></i></button>`;
+}
+function riskBreakdownHTML(data) {
+    if(!data)return '<p class="text-muted">Calculation evidence is unavailable.</p>';
+    return `<h6 class="fw-bold">How was ${riskEsc(data.stored_score)} / 100 calculated?</h6>
+    ${data.matches_stored_score?'': '<div class="alert alert-warning">The saved score differs from the current evidence. Refresh Analysis to synchronize the results.</div>'}
+    <div class="table-responsive"><table class="table table-sm table-bordered bg-white align-middle"><thead><tr><th>Parameter</th><th>Recorded value / evidence</th><th>Scoring rule</th><th>Points awarded</th><th>Status</th></tr></thead><tbody>
+    ${data.components.map(row=>`<tr><td>${riskEsc(row.parameter)}</td><td>${row.value==null?'Unavailable':riskEsc(row.value)}</td><td class="small">${riskEsc(row.rule)}</td><td class="fw-bold ${row.points?'text-danger':'text-muted'}">${Number(row.points)} / ${Number(row.maximum_points)}</td><td><span class="badge ${row.points?'bg-danger':row.status==='Unavailable'?'bg-secondary':'bg-light text-dark border'}">${riskEsc(row.status)}</span><div class="small">${riskEsc(row.explanation)}</div></td></tr>`).join('')}
+    </tbody></table></div><p class="fw-bold">${data.components.map(row=>Number(row.points)).join(' + ')} = ${Number(data.uncapped_score)} points</p>
+    ${data.cap_adjustment?`<p>Scores are capped at 100: ${Number(data.uncapped_score)} ${Number(data.cap_adjustment)} = ${Number(data.calculated_score)}.</p>`:''}
+    <p>Final score: <strong>${Number(data.calculated_score)}/100</strong>. Category: <strong>${riskEsc(data.risk_level)}</strong>. LOW &lt;40; MEDIUM 40–&lt;70; HIGH ≥70.</p>
+    <p class="small text-muted mb-0">Rule contributions are added and the combined score is capped at 100. Parameters with zero points are shown explicitly. Unavailable values are not evidence of safety. This is a rule-based review score, not a fraud probability.</p>`;
+}
+function toggleRiskBreakdown(open) {
+    const panel=document.getElementById('risk-breakdown-panel');
+    const button=document.querySelector('[data-risk-toggle]');
+    if(!panel||!button)return;
+    const expanded=open ?? panel.hidden;panel.hidden=!expanded;button.setAttribute('aria-expanded',String(expanded));
+    if(expanded){panel.scrollIntoView({behavior:'smooth',block:'start'});panel.focus({preventScroll:true});}
+}
+document.addEventListener('click',event=>{
+    const toggle=event.target.closest('[data-risk-toggle]');
+    if(toggle){toggleRiskBreakdown();return;}
+    const score=event.target.closest('[data-risk-work-id]');
+    if(score)viewProjectDetails(score.dataset.riskWorkId,true);
+});

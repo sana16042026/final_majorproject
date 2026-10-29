@@ -13,6 +13,16 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
     """
     score = 0.0
     reasons = []
+    components = []
+    def component(key, label, value, rule, maximum, available=True):
+        points = round(score - sum(row['points'] for row in components), 6)
+        components.append(dict(key=key, parameter=label, value=value if available else None,
+            rule=rule, points=points, maximum_points=maximum,
+            status='Awarded' if points else 'Not awarded' if available else 'Unavailable',
+            explanation='Condition met; points added.' if points else
+                'Condition not met; no points added.' if available else
+                'Source value or detection evidence is unavailable; no points added.'))
+
 
     # 1. ML Anomaly Result (+25 points)
     is_ml_anomaly = False
@@ -20,6 +30,10 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
         is_ml_anomaly = True
         score += 25.0
         reasons.append("ML Anomaly Detected (Isolation Forest flagged unusual multidimensional pattern)")
+
+    component('financial_anomaly', 'Isolation Forest anomaly',
+        ('Flagged' if is_ml_anomaly else 'Not flagged') + (f"; model score {ml_result.get('anomaly_score')}" if ml_result else ''),
+        'Flagged by Isolation Forest: +25; otherwise +0.', 25, ml_result is not None)
 
     # 2. Cost Overrun (up to +25 points)
     cost_overrun = float(project.get('cost_overrun_pct', 0.0) or 0.0)
@@ -40,6 +54,10 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
         score += 8.0
         reasons.append(f"Minor budget overrun: {cost_overrun:.1f}%")
 
+    component('cost_overrun', 'Cost overrun', f'{cost_overrun:g}%',
+        '>30%: +25; >15% to 30%: +15; >5% to 15%: +8; ≤5%: +0.', 25,
+        project.get('cost_overrun_pct') is not None or (sanctioned > 0 and project.get('actual_expenditure') is not None))
+
     # 3. Project Delay (up to +25 points)
     delay_days = int(project.get('delay_days', 0) or 0)
     if delay_days > 120:
@@ -51,6 +69,9 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
     elif delay_days > 20:
         score += 8.0
         reasons.append(f"Minor project delay of {delay_days} days")
+
+    component('delay', 'Recorded schedule delay', f'{delay_days} days',
+        '>120 days: +25; >60 to 120: +15; >20 to 60: +8; ≤20: +0.', 25, project.get('delay_days') is not None)
 
     # 4. Physical-Financial Progress Gap (up to +20 points)
     phy_progress = float(project.get('physical_progress_pct', 0.0) or 0.0)
@@ -66,6 +87,11 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
     elif gap > 5:
         score += 5.0
         reasons.append(f"Slight physical-financial mismatch ({gap:.1f}%)")
+
+    component('progress_gap', 'Financial minus physical progress', f'{gap:g} percentage points',
+        '>25 points: +20; >15 to 25: +12; >5 to 15: +5; ≤5: +0.', 20,
+        project.get('physical_financial_gap_pct') is not None or
+        (project.get('physical_progress_pct') is not None and project.get('financial_progress_pct') is not None))
 
     # 5. Duplicate / overlap warning (up to +10 points)
     if duplicate_matches is not None:
@@ -88,17 +114,35 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
         score += 10.0
         reasons.append(f"Similar road work description detected with Project {top_match['matched_work_id']} ({top_match['similarity_pct']}%)")
 
+    duplicate_value = 'No retained contextual match'
+    if duplicate_matches:
+        duplicate_value = f"{duplicate_matches[0]['classification']} — {duplicate_matches[0]['other_work_id']}"
+    elif duplicate_matches is None and nlp_matches:
+        duplicate_value = f"Wording-only fallback — {nlp_matches[0]['matched_work_id']}"
+    component('duplicate', 'Similar / duplicate work evidence', duplicate_value,
+        'Strongest contextual match only: likely duplicate +10; possible overlap +5; no match +0. Wording-only fallback +10 only when contextual results are unavailable.',
+        10, duplicate_matches is not None or bool(nlp_matches))
+
     # 6. Low Bidder Competition / Single Bidder (+10 points)
     num_bidders = int(project.get('number_of_bidders', 0) or 0)
     if num_bidders == 1:
         score += 10.0
         reasons.append("Single bidder procurement (lack of competitive bidding)")
 
+    component('bidders', 'Number of bidders', num_bidders,
+        'Exactly one recorded bidder: +10; otherwise +0. Missing does not mean one bidder.',
+        10, project.get('number_of_bidders') is not None)
+
     # 7. Expenditure Exceeds 1.8x Estimated Cost (+15 points)
     est_cost = float(project.get('estimated_cost', 0.0) or 0.0)
     if est_cost > 0 and actual_exp >= 1.8 * est_cost:
         score += 15.0
         reasons.append(f"Expenditure significantly exceeds original estimate (Rs. {actual_exp:,.0f} vs Rs. {est_cost:,.0f})")
+
+    component('expenditure_ratio', 'Expenditure compared with original estimate',
+        f'{actual_exp / est_cost:.4f} × estimated cost' if est_cost > 0 else None,
+        'Actual expenditure ≥1.8 × estimated cost: +15; otherwise +0.', 15,
+        est_cost > 0 and project.get('actual_expenditure') is not None)
 
     # Clamp score to 0 - 100
     final_score = round(min(100.0, max(0.0, score)), 1)
@@ -118,7 +162,10 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
         'work_id': project['work_id'],
         'risk_score': final_score,
         'risk_level': risk_level,
-        'risk_reason': " | ".join(reasons)
+        'risk_reason': " | ".join(reasons),
+        'risk_breakdown': components,
+        'uncapped_score': score,
+        'cap_adjustment': final_score - score
     }
 
 def run_risk_analysis_for_all(projects_data, ml_lookup, nlp_lookup, duplicate_lookup=None):

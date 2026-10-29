@@ -52,6 +52,8 @@
                 </a>
             </li>
             {% endif %}
+            {% if 'financial-analysis' in allowed_pages %}<li class="nav-item"><a class="nav-link {% if active_page == 'financial-analysis' %}active{% endif %}" href="/financial-analysis"><i class="bi bi-cash-coin"></i><span>Financial Analysis</span></a></li>{% endif %}
+            {% if 'similar-works' in allowed_pages %}<li class="nav-item"><a class="nav-link {% if active_page == 'similar-works' %}active{% endif %}" href="/similar-works"><i class="bi bi-intersect"></i><span>Similar & Duplicate Works</span></a></li>{% endif %}
             {% if 'risk-analysis' in allowed_pages %}
             <li class="nav-item">
                 <a class="nav-link {% if active_page == 'risk-analysis' %}active{% endif %}" href="/risk-analysis">
@@ -60,14 +62,7 @@
                 </a>
             </li>
             {% endif %}
-            {% if 'reports' in allowed_pages %}
-            <li class="nav-item">
-                <a class="nav-link {% if active_page == 'reports' %}active{% endif %}" href="/reports">
-                    <i class="bi bi-file-earmark-bar-graph"></i>
-                    <span>Reports</span>
-                </a>
-            </li>
-            {% endif %}
+
         </ul>
     </aside>
 
@@ -119,6 +114,7 @@
                     </div>
                 </div>
                 <div class="modal-footer bg-light">
+                    {% if can_see_ai %}<a id="btn-modal-report" href="/reports" class="btn btn-primary btn-sm">Generate Report</a>{% endif %}
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-outline-primary btn-sm" id="btn-modal-print" onclick="window.print()">
                         <i class="bi bi-printer me-1"></i> Print / PDF

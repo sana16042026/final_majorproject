@@ -9,7 +9,6 @@ from db import get_db_connection, query_db
 from models.nlp_engine import run_nlp_similarity_analysis
 from models.ml_engine import run_ml_anomaly_detection
 from models.risk_engine import run_risk_analysis_for_all
-from models.prediction_engine import run_prediction_analysis
 from models.duplicate_engine import run_duplicate_analysis, build_duplicate_lookup
 
 CRORE=10_000_000
@@ -119,7 +118,11 @@ def sanitize_record(row):
 def _insert(cursor,table,records,fields):
     if not records: return
     sql='INSERT INTO `'+table+'` ('+','.join('`'+f+'`' for f in fields)+') VALUES ('+','.join('%('+f+')s' for f in fields)+')'
-    for start in range(0,len(records),1000): cursor.executemany(sql,records[start:start+1000])
+    # Analysis dictionaries may contain UI explanation metadata. Only schema
+    # fields are bound to SQL, so nested evidence is never sent as a SQL value.
+    for start in range(0,len(records),1000):
+        batch=[{field:record[field] for field in fields} for record in records[start:start+1000]]
+        cursor.executemany(sql,batch)
 
 def process_and_save_dataset(file_path):
     frame,error=load_and_validate_file(file_path)
@@ -138,20 +141,17 @@ def analyze_and_save(frame):
     ml,ml_lookup=run_ml_anomaly_detection(frame,contamination=.15)
     duplicates,dup_summary=run_duplicate_analysis(projects)
     risk,_=run_risk_analysis_for_all(projects,ml_lookup,nlp_lookup,build_duplicate_lookup(duplicates))
-    predictions,pred_summary=run_prediction_analysis(projects)
     conn=get_db_connection()
     try:
         conn.begin()
         with conn.cursor() as cursor:
-            for table in ['predictions','prediction_summary','duplicate_analysis','duplicate_summary','risk_analysis','nlp_analysis','ml_analysis','road_projects']:
+            for table in ['duplicate_analysis','duplicate_summary','risk_analysis','nlp_analysis','ml_analysis','road_projects']:
                 cursor.execute('DELETE FROM `'+table+'`')
             _insert(cursor,'road_projects',projects,ROAD_PROJECT_FIELDS)
             _insert(cursor,'ml_analysis',ml,['work_id','anomaly_score','anomaly_detected','model_name'])
             _insert(cursor,'nlp_analysis',similarity,['work_id_1','work_id_2','similarity_score','similarity_status'])
             _insert(cursor,'risk_analysis',risk,['work_id','risk_score','risk_level','risk_reason'])
-            _insert(cursor,'predictions',predictions,['work_id','predicted_delay_days','predicted_overrun_pct','delay_likely','overrun_likely'])
             _insert(cursor,'duplicate_analysis',duplicates,['work_id_1','work_id_2','text_similarity','evidence_score','classification','evidence'])
-            cursor.execute('INSERT INTO prediction_summary (metrics_json) VALUES (%s)',(json.dumps(pred_summary,allow_nan=False),))
             cursor.execute('INSERT INTO duplicate_summary (metrics_json) VALUES (%s)',(json.dumps(dup_summary,allow_nan=False),))
             cursor.execute("SELECT vendor_id FROM road_projects WHERE vendor_id<>'' GROUP BY vendor_id ORDER BY COUNT(*) DESC LIMIT 1")
             top=cursor.fetchone()
@@ -164,7 +164,6 @@ def analyze_and_save(frame):
     return {'success':True,'message':f'Master dataset processed: {len(projects):,} projects; all analyses refreshed.',
         'total_projects':len(projects),'ml_anomalies_detected':sum(r['anomaly_detected'] for r in ml),
         'similar_descriptions_found':len(similarity),'high_risk_projects':sum(r['risk_level']=='HIGH' for r in risk),
-        'predictions_made':len(predictions),'prediction_model_trained':bool(pred_summary.get('trained')),
         'location_duplicate_pairs':len(duplicates),'likely_duplicates':dup_summary.get('likely_duplicates',0),
         'analysis_as_of':str(frame['analysis_as_of'].iloc[0].date()),'money_unit':'INR',
         'delay_days_available':int(frame['delay_days'].notna().sum())}

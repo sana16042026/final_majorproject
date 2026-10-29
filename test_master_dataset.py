@@ -7,13 +7,6 @@ from services.data_processor import clean_and_normalize_data, load_and_validate_
 from config import Config
 
 class MasterDatasetTests(unittest.TestCase):
-    def test_prediction_flags_do_not_treat_zero_as_overrun(self):
-        from models.prediction_engine import _evaluate
-        metrics,cutoff=_evaluate(np.array([0.,0.,20.,25.]),np.array([0.,0.,0.,16.]),15)
-        self.assertEqual(cutoff,15)
-        self.assertEqual(metrics['fp'],0)
-        self.assertEqual(metrics['tp'],1)
-
     def test_master_mapping(self):
         raw,error=load_and_validate_file(Config.MASTER_DATASET)
         self.assertIsNone(error)

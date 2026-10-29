@@ -17,9 +17,6 @@ from services.report_service import get_project_full_details, get_all_alerts
 from models.nlp_engine import run_nlp_similarity_analysis
 from models.ml_engine import run_ml_anomaly_detection
 from models.risk_engine import run_risk_analysis_for_all
-from models.prediction_engine import run_prediction_analysis
-from services.prediction_service import (save_prediction_results, get_prediction_summary,
-                                         get_project_prediction)
 from models.duplicate_engine import run_duplicate_analysis
 from services.duplicate_service import (save_duplicate_results, get_duplicate_summary,
                                         get_project_duplicates)
@@ -40,17 +37,17 @@ os.makedirs(app.config['DATA_FOLDER'], exist_ok=True)
 ROLES = {
     'district_admin': {
         'label': 'District Administrator',
-        'pages': {'dashboard', 'projects', 'upload', 'risk-analysis', 'reports'},
+        'pages': {'dashboard', 'projects', 'upload', 'financial-analysis', 'similar-works', 'risk-analysis', 'reports'},
         'ai': True, 'manage': True,
     },
     'ministry': {
         'label': 'Nodal Ministry / MP',
-        'pages': {'dashboard', 'projects', 'risk-analysis', 'reports'},
+        'pages': {'dashboard', 'projects', 'financial-analysis', 'similar-works', 'risk-analysis', 'reports'},
         'ai': True, 'manage': False,
     },
     'auditor': {
         'label': 'Auditor / Investigation Agency',
-        'pages': {'dashboard', 'projects', 'risk-analysis', 'reports'},
+        'pages': {'dashboard', 'projects', 'financial-analysis', 'similar-works', 'risk-analysis', 'reports'},
         'ai': True, 'manage': False,
     },
     'vendor': {
@@ -243,7 +240,17 @@ def upload_page():
 @app.route('/risk-analysis')
 @page_access('risk-analysis')
 def risk_page():
-    return render_template('risk_analysis.html', active_page='risk-analysis')
+    return render_template('risk_analysis.html', active_page='risk-analysis', analysis_mode='risk', analysis_title='Risk Analysis', analysis_description='Combined risk scores, categories, explanations, and review alerts.')
+
+@app.route('/financial-analysis')
+@page_access('financial-analysis')
+def financial_analysis_page():
+    return render_template('financial_analysis.html', active_page='financial-analysis', analysis_mode='financial', analysis_title='Financial Analysis', analysis_description='Isolation Forest anomaly results with recorded spending, progress, and date-based financial indicators.')
+
+@app.route('/similar-works')
+@page_access('similar-works')
+def similar_works_page():
+    return render_template('similar_works.html', active_page='similar-works', analysis_mode='similarity', analysis_title='Similar & Duplicate Works', analysis_description='Compare description wording and contextual duplicate evidence. Candidates require manual verification.')
 
 @app.route('/reports')
 @page_access('reports')
@@ -503,9 +510,6 @@ def api_get_project_detail(work_id):
         return jsonify({'success': False, 'message': 'Project not found'}), 404
     payload = sanitize_for_role(details)
     if has_ai() and isinstance(payload, dict):
-        prediction = get_project_prediction(work_id)
-        if prediction:
-            payload['prediction'] = prediction
         payload['location_duplicates'] = get_project_duplicates(work_id)
     return jsonify({'success': True, 'data': payload})
 
@@ -608,89 +612,6 @@ def api_risk_projects():
         'total_pages': max(1, math.ceil(total / limit)),
         'projects': rows
     })
-
-@app.route('/api/predictions/summary', methods=['GET'])
-@api_access('ai')
-def api_prediction_summary():
-    """Accuracy of the latest delay / cost-overrun model + counts of flagged projects (scoped)."""
-    where, sp = scope_clause('p')
-    counts = None
-    try:
-        counts = query_db(f"""
-            SELECT COUNT(*) AS total,
-                   CAST(COALESCE(SUM(pr.delay_likely), 0) AS SIGNED) AS likely_delay,
-                   CAST(COALESCE(SUM(pr.overrun_likely), 0) AS SIGNED) AS likely_overrun,
-                   CAST(COALESCE(SUM(CASE WHEN pr.delay_likely = 1 AND pr.overrun_likely = 1
-                                          THEN 1 ELSE 0 END), 0) AS SIGNED) AS likely_both
-            FROM predictions pr
-            JOIN road_projects p ON p.work_id = pr.work_id
-            WHERE {where}
-        """, sp, one=True)
-    except Exception:
-        pass
-    return jsonify({'summary': get_prediction_summary(), 'counts': counts})
-
-@app.route('/api/predictions/projects', methods=['GET'])
-@api_access('ai')
-def api_prediction_projects():
-    """Paginated predictions. kind = delay | overrun | both | all (scoped to the user)."""
-    kind = request.args.get('kind', 'delay').strip().lower()
-    if kind not in ('delay', 'overrun', 'both', 'all'):
-        return jsonify({'success': False, 'message': 'kind must be delay, overrun, both or all.'}), 400
-    search = request.args.get('search', '').strip()
-    try:
-        page = max(1, int(request.args.get('page', 1)))
-        limit = min(200, max(10, int(request.args.get('limit', 25))))
-    except (ValueError, TypeError):
-        page, limit = 1, 25
-
-    scope_sql, scope_params = scope_clause('p')
-    clauses = [scope_sql]
-    params = list(scope_params)
-    if kind == 'delay':
-        clauses.append("pr.delay_likely = 1")
-    elif kind == 'overrun':
-        clauses.append("pr.overrun_likely = 1")
-    elif kind == 'both':
-        clauses.append("pr.delay_likely = 1 AND pr.overrun_likely = 1")
-    if search:
-        clauses.append("(p.work_id LIKE %s OR p.description LIKE %s)")
-        like = f"%{search}%"
-        params.extend([like, like])
-    where_sql = " AND ".join(clauses)
-    order_sql = "pr.predicted_overrun_pct DESC" if kind == 'overrun' else "pr.predicted_delay_days DESC"
-
-    try:
-        total = query_db(f"""
-            SELECT COUNT(*) AS total
-            FROM predictions pr JOIN road_projects p ON p.work_id = pr.work_id
-            WHERE {where_sql}
-        """, params, one=True)['total'] or 0
-        rows = query_db(f"""
-            SELECT p.work_id, p.description, p.district, p.state, p.status,
-                   p.delay_days, p.delay_basis, p.analysis_as_of, p.expected_completion_date, p.completion_date, p.cost_overrun_pct,
-                   pr.predicted_delay_days, pr.predicted_overrun_pct,
-                   pr.delay_likely, pr.overrun_likely
-            FROM predictions pr JOIN road_projects p ON p.work_id = pr.work_id
-            WHERE {where_sql}
-            ORDER BY {order_sql}, p.work_id ASC
-            LIMIT %s OFFSET %s
-        """, params + [limit, (page - 1) * limit])
-    except Exception:
-        return jsonify({'success': False,
-                        'message': "Prediction tables not found. Run 'python init_db.py' and upload a dataset."}), 500
-
-    return jsonify({
-        'kind': kind, 'total': total, 'page': page, 'limit': limit,
-        'total_pages': max(1, math.ceil(total / limit)),
-        'projects': rows
-    })
-
-@app.route('/api/run-prediction', methods=['POST'])
-@api_access('manage')
-def api_run_prediction():
-    result = reprocess_current_dataset()
-    return jsonify(result), 200 if result.get('success') else 400
 
 @app.route('/api/duplicates/summary', methods=['GET'])
 @api_access('ai')
@@ -859,9 +780,6 @@ def api_project_report(work_id):
     if not details:
         return jsonify({'success': False, 'message': 'Project not found.'}), 404
     if isinstance(details, dict):
-        prediction = get_project_prediction(work_id)
-        if prediction:
-            details['prediction'] = prediction
         details['location_duplicates'] = get_project_duplicates(work_id)
     return jsonify({'success': True, 'report': details})
 
@@ -899,10 +817,10 @@ def api_summary_report():
     LIMIT 25
     """, sp)
 
-    # location-aware duplicates and predicted delays / overruns (tables may not exist in an old database)
+    # Location-aware duplicate summary.
     scope_a, params_a = scope_clause('a')
     scope_b, params_b = scope_clause('b')
-    likely_duplicates = possible_overlaps = likely_delayed = likely_overrun = 0
+    likely_duplicates = possible_overlaps = 0
     try:
         dup = one(f"""
             SELECT CAST(COALESCE(SUM(CASE WHEN d.classification = 'Likely duplicate' THEN 1 ELSE 0 END), 0) AS SIGNED) AS likely,
@@ -914,17 +832,6 @@ def api_summary_report():
         likely_duplicates, possible_overlaps = dup['likely'] or 0, dup['possible'] or 0
     except Exception:
         pass
-    try:
-        pred = one(f"""
-            SELECT CAST(COALESCE(SUM(pr.delay_likely), 0) AS SIGNED) AS delay_count,
-                   CAST(COALESCE(SUM(pr.overrun_likely), 0) AS SIGNED) AS overrun_count
-            FROM predictions pr
-            JOIN road_projects p ON p.work_id = pr.work_id
-            WHERE {where}""", sp)
-        likely_delayed, likely_overrun = pred['delay_count'] or 0, pred['overrun_count'] or 0
-    except Exception:
-        pass
-
     return jsonify({
         'summary': {
             'total_projects': total_projects,
@@ -934,9 +841,7 @@ def api_summary_report():
             'anomalies_count': anomalies_count,
             'nlp_similarity_count': nlp_count,
             'likely_duplicates': likely_duplicates,
-            'possible_overlaps': possible_overlaps,
-            'likely_delayed': likely_delayed,
-            'likely_overrun': likely_overrun
+            'possible_overlaps': possible_overlaps
         },
         'high_risk_projects': high_risk_projects
     })
@@ -949,7 +854,6 @@ def download_project_report(work_id):
     report = get_project_full_details(work_id)
     if not report:
         return jsonify({'success': False, 'message': 'Project not found.'}), 404
-    report['prediction'] = get_project_prediction(work_id)
     report['location_duplicates'] = get_project_duplicates(work_id)
     p = report['project']
     content = '<!doctype html><html><head><meta charset="utf-8"><title>DRISHTI Work Report</title><style>body{font:16px system-ui;margin:40px}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style></head><body>'
@@ -961,6 +865,57 @@ def download_project_report(work_id):
     return send_file(BytesIO(content.encode('utf-8')),mimetype='text/html',as_attachment=True,
                      download_name='DRISHTI_'+secure_filename(work_id)+'_Report.html')
 
+
+
+def analysis_pagination():
+    try:
+        return max(1,int(request.args.get('page',1))),min(100,max(10,int(request.args.get('limit',25))))
+    except (ValueError,TypeError):
+        return 1,25
+
+@app.route('/api/financial-analysis/projects')
+@api_access('ai')
+def financial_analysis_projects():
+    page,limit=analysis_pagination()
+    scope,params=scope_clause('p')
+    filters=[scope]
+    search=request.args.get('search','').strip()
+    kind=request.args.get('kind','anomalies')
+    if kind not in {'anomalies','normal','all'}:
+        return jsonify(success=False,message='Invalid financial result filter.'),400
+    if kind!='all':
+        filters.append('m.anomaly_detected=%s');params.append(1 if kind=='anomalies' else 0)
+    if search:
+        filters.append('(p.work_id LIKE %s OR p.description LIKE %s)');params+=['%'+search+'%']*2
+    clause=' AND '.join(filters)
+    total=query_db(f'SELECT COUNT(*) AS n FROM ml_analysis m JOIN road_projects p ON p.work_id=m.work_id WHERE {clause}',params,one=True)['n']
+    rows=query_db(f"""SELECT p.work_id,p.description,p.state,p.district,p.actual_expenditure,m.anomaly_score,m.anomaly_detected
+        FROM ml_analysis m JOIN road_projects p ON p.work_id=m.work_id WHERE {clause}
+        ORDER BY m.anomaly_score DESC,p.work_id LIMIT %s OFFSET %s""",params+[limit,(page-1)*limit])
+    scope,sp=scope_clause('p')
+    stats=query_db(f"""SELECT COUNT(*) AS analysed, COALESCE(SUM(m.anomaly_detected=1),0) AS flagged,
+        COALESCE(SUM(m.anomaly_detected=0),0) AS normal
+        FROM ml_analysis m JOIN road_projects p ON p.work_id=m.work_id WHERE {scope}""",sp,one=True)
+    return jsonify(total=total,page=page,limit=limit,total_pages=max(1,math.ceil(total/limit)),projects=rows,summary=stats)
+
+@app.route('/api/similarity/projects')
+@api_access('ai')
+def description_similarity_projects():
+    page,limit=analysis_pagination()
+    sa,pa=scope_clause('a');sb,pb=scope_clause('b')
+    filters=[sa,sb];params=pa+pb
+    search=request.args.get('search','').strip()
+    if search:
+        filters.append('(a.work_id LIKE %s OR b.work_id LIKE %s OR a.description LIKE %s OR b.description LIKE %s)')
+        params+=['%'+search+'%']*4
+    clause=' AND '.join(filters)
+    joins='FROM nlp_analysis n JOIN road_projects a ON a.work_id=n.work_id_1 JOIN road_projects b ON b.work_id=n.work_id_2'
+    total=query_db(f'SELECT COUNT(*) AS n {joins} WHERE {clause}',params,one=True)['n']
+    rows=query_db(f"""SELECT n.work_id_1,n.work_id_2,n.similarity_score,n.similarity_status,
+        a.description AS description_1,b.description AS description_2,a.state AS state_1,a.district AS district_1,
+        b.state AS state_2,b.district AS district_2 {joins} WHERE {clause}
+        ORDER BY n.similarity_score DESC,n.similarity_id LIMIT %s OFFSET %s""",params+[limit,(page-1)*limit])
+    return jsonify(total=total,page=page,limit=limit,total_pages=max(1,math.ceil(total/limit)),pairs=rows)
 
 if __name__ == '__main__':
     app.run(host=Config.APP_HOST, port=Config.APP_PORT, debug=True)
