@@ -50,23 +50,24 @@ Numerical/date values and work IDs are retained from the supplied workbook.
 | Parameter | Maximum | Awarded points |
 | --- | ---: | --- |
 | Isolation Forest anomaly | 25 | Flagged: 25; otherwise 0 |
-| Cost overrun | 25 | >30%: 25; >15% to 30%: 15; >5% to 15%: 8; otherwise 0 |
-| Recorded schedule delay | 25 | >120 days: 25; >60 to 120: 15; >20 to 60: 8; otherwise 0 |
+| Cost overrun | 20 | >30%: 20; >15% to 30%: 12; >5% to 15%: 6.4; otherwise 0 |
+| Recorded schedule delay | 15 | >120 days: 15; >60 to 120: 9; >20 to 60: 4.8; otherwise 0 |
 | Financial minus physical progress | 10 | >25 percentage points: 10; >15 to 25: 6; >5 to 15: 2.5; otherwise 0 |
 | Similar / duplicate work evidence | 20 | Strongest contextual match: likely duplicate 20; possible overlap 10; no match 0 |
-| Number of bidders | 10 | Exactly one recorded bidder: 10; otherwise 0 |
-| Expenditure against original estimate | 15 | Actual expenditure >=1.8 times estimated cost: 15; otherwise 0 |
+| Expenditure against original estimate | 10 | Actual expenditure >=1.8 times estimated cost: 10; otherwise 0 |
 
 Wording-only fallback contributes 20 only when contextual results are unavailable.
 Contextual evidence is rounded to one decimal before selection/classification,
 so the displayed evidence score and its category agree. Equal stored scores use
 a stable pair order for both scoring and explanations.
-The maxima sum to 130; awarded contributions are added and capped at 100.
+The six maxima sum to exactly 100; awarded contributions are added directly.
+Bidder count is not a scoring parameter. Overrun and delay tier awards are scaled
+proportionally from their previous maxima; thresholds are unchanged.
 LOW <40, MEDIUM 40 to <70, HIGH >=70. Missing evidence is displayed as unavailable
 and contributes zero. Scores prioritize manual review and are not fraud probabilities.
-Click a score to see all seven parameter values, rules, awarded/max points and status.
+Click a score to see all six parameter values, rules, awarded/max points and status.
 For the illustrated negative gap plus 29-day delay and possible overlap:
-0 + 0 + 8 + 0 + 10 + 0 + 0 = 18/100.
+0 + 0 + 4.8 + 0 + 10 + 0 = 14.8/100.
 
 ## Recorded calculations
 
@@ -100,3 +101,31 @@ python checks/validate_project.py --database drishti_final_major_validation --im
 The full test uploads both formats and rebuilds their analyses in that validation
 database. See checks/VERIFICATION.md for executed checks and limits.
 The downloadable ZIP excludes .env, virtual environments, uploads and caches.
+
+
+## Sign Up and User Accounts
+
+- Open `/signup` from the login screen to register a citizen account. Public
+  registration cannot select an official role or access scope.
+- Log in as an administrator with access to all districts, then open **User
+  Accounts** to add users and view the registered accounts. District-scoped
+  administrators, ministries, auditors, vendors and citizens cannot add users.
+- Select a role and optional scope: district name for district administrators,
+  MP identifier for ministry users, required vendor identifier for contractors.
+  Auditor and citizen accounts do not use a scope.
+- Accounts are stored in the existing MariaDB `users` table. Passwords are hashed
+  with Werkzeug; hashes and passwords are never shown in the account list.
+- New passwords require 8-128 characters and confirmation. Usernames must be
+  unique, 3-50 characters, using letters, numbers, dots, underscores or hyphens.
+- New account forms include session-bound CSRF tokens. Existing demo logins and
+  the optional `create_user.py` maintenance tool remain compatible.
+
+
+## Clickable contextual evidence scores
+
+In Similar & Duplicate Works > Contextual Duplicate Detection, click an evidence
+score to see all six contributions, including zero-point factors. The explanation
+uses saved match evidence; it does not rerun or alter the analysis. Same state and
+district are eligibility gates, not extra points. The total is rounded to one
+decimal, with its rounding included in the description contribution. This match
+score is separate from the project's combined risk score.

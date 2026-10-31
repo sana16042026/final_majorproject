@@ -1,0 +1,17 @@
+D:\xampp\mysql\bin\mysql.exe" -h 127.0.0.1 -P 3306 -u root -p
+
+USE drishti_final_major;
+
+SHOW TABLES;
+
+SELECT COUNT(*) AS total_projects
+FROM road_projects;
+
+SELECT work_id, state, district, actual_expenditure, delay_days
+FROM road_projects
+LIMIT 5;
+
+SELECT work_id, risk_score, risk_level
+FROM risk_analysis
+ORDER BY risk_score DESC
+LIMIT 5;

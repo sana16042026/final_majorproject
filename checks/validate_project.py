@@ -65,7 +65,7 @@ def main():
     risks={r['work_id']:r for r in query_db('SELECT * FROM risk_analysis')}
     duplicates=query_db('SELECT * FROM duplicate_analysis ORDER BY evidence_score DESC, pair_id ASC')
     lookup=build_duplicate_lookup(duplicates)
-    maxima={'financial_anomaly':25,'cost_overrun':25,'delay':25,'progress_gap':10,'duplicate':20,'bidders':10,'expenditure_ratio':15}
+    maxima={'financial_anomaly':25,'cost_overrun':20,'delay':15,'progress_gap':10,'duplicate':20,'expenditure_ratio':10}
     check(len(ml)==len(risks)==15000,'Financial and risk analyses exist for every work')
     for r in rows:
         calculated=calculate_project_risk(r,ml.get(r['work_id']),[],lookup.get(r['work_id'],[]))
@@ -74,9 +74,9 @@ def main():
         components=calculated['risk_breakdown']
         assert {c['key']:c['maximum_points'] for c in components}==maxima
         assert all(0<=c['points']<=c['maximum_points'] for c in components)
-        assert sum(c['points'] for c in components)==calculated['uncapped_score']
-        assert min(100,calculated['uncapped_score'])==calculated['risk_score']
-    check(True,'All 15000 stored risk scores reconcile with all seven graded parameters and the cap')
+        assert abs(sum(c['points'] for c in components)-calculated['uncapped_score'])<1e-6
+        assert round(min(100,calculated['uncapped_score']),1)==calculated['risk_score']
+    check(True,'All 15000 stored risk scores reconcile with all six graded parameters and the cap')
     check(all(by_id[d['work_id_1']]['state']==by_id[d['work_id_2']]['state'] and by_id[d['work_id_1']]['district']==by_id[d['work_id_2']]['district'] for d in duplicates),'All contextual duplicate pairs remain inside the same state and district')
     for url in ['/','/projects','/upload','/financial-analysis','/similar-works','/risk-analysis','/reports?work_id=R-00001']:
         check(client.get(url).status_code==200,'Page renders '+url)

@@ -1,5 +1,4 @@
 {
-  "work_id": "R-05637",
   "components": [
     {
       "key": "financial_anomaly",
@@ -15,9 +14,9 @@
       "key": "cost_overrun",
       "parameter": "Cost overrun",
       "value": "0%",
-      "rule": ">30%: +25; >15% to 30%: +15; >5% to 15%: +8; \u22645%: +0.",
+      "rule": ">30%: +20; >15% to 30%: +12; >5% to 15%: +6.4; \u22645%: +0.",
       "points": 0.0,
-      "maximum_points": 25,
+      "maximum_points": 20,
       "status": "Not awarded",
       "explanation": "Condition not met; no points added."
     },
@@ -25,9 +24,9 @@
       "key": "delay",
       "parameter": "Recorded schedule delay",
       "value": "29 days",
-      "rule": ">120 days: +25; >60 to 120: +15; >20 to 60: +8; \u226420: +0.",
-      "points": 8.0,
-      "maximum_points": 25,
+      "rule": ">120 days: +15; >60 to 120: +9; >20 to 60: +4.8; \u226420: +0.",
+      "points": 4.8,
+      "maximum_points": 15,
       "status": "Awarded",
       "explanation": "Condition met; points added."
     },
@@ -52,30 +51,20 @@
       "explanation": "Condition met; points added."
     },
     {
-      "key": "bidders",
-      "parameter": "Number of bidders",
-      "value": null,
-      "rule": "Exactly one recorded bidder: +10; otherwise +0. Missing does not mean one bidder.",
-      "points": 0.0,
-      "maximum_points": 10,
-      "status": "Unavailable",
-      "explanation": "Source value or detection evidence is unavailable; no points added."
-    },
-    {
       "key": "expenditure_ratio",
       "parameter": "Expenditure compared with original estimate",
       "value": "0.9000 \u00d7 estimated cost",
-      "rule": "Actual expenditure \u22651.8 \u00d7 estimated cost: +15; otherwise +0.",
+      "rule": "Actual expenditure \u22651.8 \u00d7 estimated cost: +10; otherwise +0.",
       "points": 0.0,
-      "maximum_points": 15,
+      "maximum_points": 10,
       "status": "Not awarded",
       "explanation": "Condition not met; no points added."
     }
   ],
-  "uncapped_score": 18.0,
-  "stored_score": 18.0,
-  "calculated_score": 18.0,
-  "risk_level": "LOW",
+  "uncapped_score": 14.8,
+  "stored_score": 14.8,
+  "calculated_score": 14.8,
   "cap_adjustment": 0.0,
+  "risk_level": "LOW",
   "matches_stored_score": true
 }

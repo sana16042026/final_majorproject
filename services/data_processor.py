@@ -167,3 +167,29 @@ def analyze_and_save(frame):
         'location_duplicate_pairs':len(duplicates),'likely_duplicates':dup_summary.get('likely_duplicates',0),
         'analysis_as_of':str(frame['analysis_as_of'].iloc[0].date()),'money_unit':'INR',
         'delay_days_available':int(frame['delay_days'].notna().sum())}
+
+
+def refresh_saved_risk_scores():
+    """Apply current scoring rules without replacing projects or other analyses."""
+    from models.risk_engine import run_risk_analysis_for_all
+    projects=query_db('SELECT * FROM road_projects ORDER BY work_id')
+    ml={r['work_id']:r for r in query_db('SELECT * FROM ml_analysis')}
+    nlp={}
+    for row in query_db('SELECT * FROM nlp_analysis ORDER BY similarity_score DESC'):
+        for me,other in ((row['work_id_1'],row['work_id_2']),(row['work_id_2'],row['work_id_1'])):
+            nlp.setdefault(me,[]).append(dict(matched_work_id=other,similarity_pct=row['similarity_score']*100))
+    duplicates=build_duplicate_lookup(query_db('SELECT * FROM duplicate_analysis ORDER BY evidence_score DESC, pair_id ASC'))
+    risks,_=run_risk_analysis_for_all(projects,ml,nlp,duplicates)
+    conn=get_db_connection()
+    try:
+        conn.begin()
+        with conn.cursor() as cursor:
+            cursor.executemany('UPDATE risk_analysis SET risk_score=%(risk_score)s,risk_level=%(risk_level)s,risk_reason=%(risk_reason)s WHERE work_id=%(work_id)s',
+                [{k:r[k] for k in ('work_id','risk_score','risk_level','risk_reason')} for r in risks])
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+    return len(risks)

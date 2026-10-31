@@ -31,7 +31,7 @@ for work in ['R-00001','R-03837','R-05637']:
     report=c.get('/api/reports/project/'+work).get_json()['report']
     check(detail['risk_breakdown']['matches_stored_score'] and report['risk_breakdown']['matches_stored_score'],'Details/report score consistency: '+work)
     maxima={r['key']:r['maximum_points'] for r in detail['risk_breakdown']['components']}
-    check(maxima['progress_gap']==10 and maxima['duplicate']==20,'Correct grading maxima: '+work)
+    check(maxima=={'financial_anomaly':25,'cost_overrun':20,'delay':15,'progress_gap':10,'duplicate':20,'expenditure_ratio':10},'Correct grading maxima: '+work)
 check(c.get('/api/reports/project/R-00001/download').status_code==200,'Final report download works')
 result=dict(passed=len(checks),checks=checks,database=Config.DB_NAME,records=15000,columns=24,states=28)
 (P/'checks/LOCAL_VERIFICATION.json').write_text(json.dumps(result,indent=2),encoding='utf-8')

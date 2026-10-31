@@ -24,6 +24,9 @@ from services.duplicate_service import (save_duplicate_results, get_duplicate_su
 app = Flask(__name__, template_folder='Frontend' if os.path.isdir(os.path.join(Config.BASE_DIR, 'Frontend')) else 'templates')
 app.config.from_object(Config)
 
+from services.account_routes import accounts, can_manage_users
+app.register_blueprint(accounts)
+
 # Ensure folders exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['DATA_FOLDER'], exist_ok=True)
@@ -158,6 +161,7 @@ def inject_user():
         'role_label': role['label'] if role else '',
         'allowed_pages': role['pages'] if role else set(),
         'can_manage': bool(role and role['manage']),
+        'can_manage_users': can_manage_users(),
         'can_see_ai': bool(role and role['ai']),
     }
 
@@ -195,7 +199,7 @@ def login_page():
 
     if current_user():
         return redirect(url_for('dashboard_page'))
-    return render_template('login.html', error=None)
+    return render_template('login.html', error=None, notice=session.pop('account_notice', None))
 
 
 @app.route('/logout')
@@ -684,7 +688,7 @@ def api_duplicate_projects():
             WHERE {where_sql}
         """, params, one=True)['total'] or 0
         rows = query_db(f"""
-            SELECT d.work_id_1, a.description AS description_1,
+            SELECT d.pair_id, d.work_id_1, a.description AS description_1,
                    d.work_id_2, b.description AS description_2,
                    a.district, a.state,
                    d.text_similarity, d.evidence_score, d.classification, d.evidence
@@ -704,6 +708,18 @@ def api_duplicate_projects():
         'total_pages': max(1, math.ceil(total / limit)),
         'pairs': rows
     })
+
+@app.route('/api/duplicates/<int:pair_id>/evidence', methods=['GET'])
+@api_access('ai')
+def api_duplicate_evidence(pair_id):
+    from services.duplicate_evidence import explain_duplicate_evidence
+    pair = query_db('SELECT * FROM duplicate_analysis WHERE pair_id=%s', [pair_id], one=True)
+    if not pair or not all(project_in_scope(pair[key]) for key in ('work_id_1','work_id_2')):
+        return jsonify(message='Pair not found or outside your access scope.'), 404
+    first=query_db('SELECT * FROM road_projects WHERE work_id=%s',[pair['work_id_1']],one=True)
+    second=query_db('SELECT * FROM road_projects WHERE work_id=%s',[pair['work_id_2']],one=True)
+    return jsonify(explain_duplicate_evidence(pair, first, second))
+
 
 @app.route('/api/run-duplicates', methods=['POST'])
 @api_access('manage')

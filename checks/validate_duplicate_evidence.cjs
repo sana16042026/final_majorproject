@@ -1,0 +1,10 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
+const root=path.resolve(__dirname,'..');let listener,requested,shown=false;
+const body={innerHTML:''},modal={};
+const fixture={work_id_1:'A',work_id_2:'B',description_1:'<img src=x>',description_2:'Example',location:'District',classification:'Possible overlap',total:55.1,note:'Saved evidence',components:[{parameter:'Description',value:'50.2%',rule:'50 × similarity',points:25.1,maximum:50,status:'Awarded'},{parameter:'Place',value:'No shared place',rule:'Shared place',points:0,maximum:15,status:'Not awarded'}]};
+const context={window:{},document:{addEventListener:(name,fn)=>{listener=fn;},getElementById:id=>id==='duplicateEvidenceModal'?modal:body},bootstrap:{Modal:{getOrCreateInstance:()=>({show(){shown=true;}})}},fetch:async url=>{requested=url;return {ok:true,json:async()=>fixture};}};
+vm.createContext(context);vm.runInContext(fs.readFileSync(root+'/static/js/duplicate_evidence.js','utf8'),context);
+const html=context.window.duplicateEvidenceHTML(fixture);
+assert.ok(html.includes('25.1 / 50')&&html.includes('0 / 15')&&html.includes('Not awarded'));
+assert.ok(html.includes('&lt;img')&&!html.includes('<img'));
+(async()=>{await listener({target:{closest:()=>({dataset:{evidencePair:'123'}})}});assert.equal(requested,'/api/duplicates/123/evidence');assert.ok(shown&&body.innerHTML.includes('55.1 / 100'));context.fetch=async()=>({ok:false,json:async()=>({message:'Not found'})});await listener({target:{closest:()=>({dataset:{evidencePair:'999'}})}});assert.ok(body.innerHTML.includes('Not found'));console.log('PASS: score click opens modal, requests correct pair, shows points and zeroes, escapes text and handles errors.');})();

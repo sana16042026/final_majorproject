@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}User Accounts{% endblock %}
+{% block page_title %}User Accounts{% endblock %}
+{% block page_icon %}<i class="bi bi-people text-primary"></i>{% endblock %}
+{% block content %}
+{% if error %}<div class="alert alert-danger" role="alert">{{ error }}</div>{% endif %}
+{% if notice %}<div class="alert alert-success" role="status">{{ notice }}</div>{% endif %}
+<div class="row g-4">
+<div class="col-xl-4"><section class="card"><div class="card-body">
+<h2 class="h5">Add User</h2><p class="text-muted small">Create an account and assign its access. Passwords are stored as hashes.</p>
+<form method="post">
+<input type="hidden" name="csrf_token" value="{{ token }}">
+<div class="mb-3"><label for="full_name" class="form-label">Full name</label><input id="full_name" name="full_name" class="form-control" required maxlength="100" value="{{ values.get('full_name','') }}"></div>
+<div class="mb-3"><label for="username" class="form-label">Username</label><input id="username" name="username" class="form-control" required minlength="3" maxlength="50" value="{{ values.get('username','') }}" autocomplete="off"></div>
+<div class="mb-3"><label for="role" class="form-label">Role</label><select id="role" name="role" class="form-select" required>{% for key,label in role_labels.items() %}<option value="{{ key }}" {% if values.get('role','citizen')==key %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></div>
+<div class="mb-3"><label for="scope" class="form-label">Access scope</label><input id="scope" name="scope" class="form-control" maxlength="100" value="{{ values.get('scope','') }}"><div id="scope-help" class="form-text">District administrator: exact district name, or blank for all districts. Ministry: exact MP identifier, or blank for all projects. Vendor: exact vendor identifier required. Auditor and citizen: leave blank.</div></div>
+<div class="mb-3"><label for="password" class="form-label">Password</label><input id="password" name="password" type="password" class="form-control" required minlength="8" maxlength="128" autocomplete="new-password"></div>
+<div class="mb-3"><label for="confirm_password" class="form-label">Confirm password</label><input id="confirm_password" name="confirm_password" type="password" class="form-control" required minlength="8" maxlength="128" autocomplete="new-password"></div>
+<button class="btn btn-primary" type="submit">Add User</button>
+</form></div></section></div>
+<div class="col-xl-8"><section class="card"><div class="card-body"><h2 class="h5">Registered Users ({{ users|length }})</h2>
+<div class="table-responsive"><table class="table table-sm align-middle"><thead><tr><th>Username</th><th>Full name</th><th>Role</th><th>Scope</th><th>Created</th></tr></thead><tbody>
+{% for u in users %}<tr><td>{{ u.username }}</td><td>{{ u.full_name }}</td><td>{{ role_labels.get(u.role,u.role) }}</td><td>{{ u.district or u.mp_id or u.vendor_id or ('All districts' if u.role=='district_admin' else 'All projects' if u.role=='ministry' else '—') }}</td><td>{{ u.created_at }}</td></tr>{% endfor %}
+</tbody></table></div></div></section></div>
+</div>
+{% endblock %}

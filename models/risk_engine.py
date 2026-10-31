@@ -9,7 +9,7 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
     5. Location-aware Duplicate / Overlap Check (same district, backed by place,
        road type, length and cost). When the location-aware check did not run
        (duplicate_matches is None) the older description-only NLP match is used.
-    6. Expenditure & Bidding Pattern
+    6. Expenditure compared with the original estimate
     """
     score = 0.0
     reasons = []
@@ -35,7 +35,7 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
         ('Flagged' if is_ml_anomaly else 'Not flagged') + (f"; model score {ml_result.get('anomaly_score')}" if ml_result else ''),
         'Flagged by Isolation Forest: +25; otherwise +0.', 25, ml_result is not None)
 
-    # 2. Cost Overrun (up to +25 points)
+    # 2. Cost Overrun (up to +20 points)
     cost_overrun = float(project.get('cost_overrun_pct', 0.0) or 0.0)
     actual_exp = float(project.get('actual_expenditure', 0.0) or 0.0)
     sanctioned = float(project.get('sanctioned_amount', 0.0) or 0.0)
@@ -45,33 +45,33 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
         cost_overrun = round(((actual_exp - sanctioned) / sanctioned) * 100, 2)
 
     if cost_overrun > 30:
-        score += 25.0
+        score += 20.0
         reasons.append(f"High cost overrun: {cost_overrun:.1f}% beyond sanctioned budget")
     elif cost_overrun > 15:
-        score += 15.0
+        score += 12.0
         reasons.append(f"Moderate cost overrun: {cost_overrun:.1f}% over budget")
     elif cost_overrun > 5:
-        score += 8.0
+        score += 6.4
         reasons.append(f"Minor budget overrun: {cost_overrun:.1f}%")
 
     component('cost_overrun', 'Cost overrun', f'{cost_overrun:g}%',
-        '>30%: +25; >15% to 30%: +15; >5% to 15%: +8; ≤5%: +0.', 25,
+        '>30%: +20; >15% to 30%: +12; >5% to 15%: +6.4; ≤5%: +0.', 20,
         project.get('cost_overrun_pct') is not None or (sanctioned > 0 and project.get('actual_expenditure') is not None))
 
-    # 3. Project Delay (up to +25 points)
+    # 3. Project Delay (up to +15 points)
     delay_days = int(project.get('delay_days', 0) or 0)
     if delay_days > 120:
-        score += 25.0
+        score += 15.0
         reasons.append(f"Severe project delay of {delay_days} days")
     elif delay_days > 60:
-        score += 15.0
+        score += 9.0
         reasons.append(f"Moderate project delay of {delay_days} days")
     elif delay_days > 20:
-        score += 8.0
+        score += 4.8
         reasons.append(f"Minor project delay of {delay_days} days")
 
     component('delay', 'Recorded schedule delay', f'{delay_days} days',
-        '>120 days: +25; >60 to 120: +15; >20 to 60: +8; ≤20: +0.', 25, project.get('delay_days') is not None)
+        '>120 days: +15; >60 to 120: +9; >20 to 60: +4.8; ≤20: +0.', 15, project.get('delay_days') is not None)
 
     # 4. Physical-Financial Progress Gap (up to +10 points)
     phy_progress = float(project.get('physical_progress_pct', 0.0) or 0.0)
@@ -124,26 +124,18 @@ def calculate_project_risk(project, ml_result=None, nlp_matches=None, duplicate_
         'Strongest contextual match only: likely duplicate +20; possible overlap +10; no match +0. Wording-only fallback +20 only when contextual results are unavailable.',
         20, duplicate_matches is not None or bool(nlp_matches))
 
-    # 6. Low Bidder Competition / Single Bidder (+10 points)
-    num_bidders = int(project.get('number_of_bidders', 0) or 0)
-    if num_bidders == 1:
-        score += 10.0
-        reasons.append("Single bidder procurement (lack of competitive bidding)")
-
-    component('bidders', 'Number of bidders', num_bidders,
-        'Exactly one recorded bidder: +10; otherwise +0. Missing does not mean one bidder.',
-        10, project.get('number_of_bidders') is not None)
-
-    # 7. Expenditure Exceeds 1.8x Estimated Cost (+15 points)
+    # 6. Expenditure Exceeds 1.8x Estimated Cost (+10 points)
     est_cost = float(project.get('estimated_cost', 0.0) or 0.0)
     if est_cost > 0 and actual_exp >= 1.8 * est_cost:
-        score += 15.0
+        score += 10.0
         reasons.append(f"Expenditure significantly exceeds original estimate (Rs. {actual_exp:,.0f} vs Rs. {est_cost:,.0f})")
 
     component('expenditure_ratio', 'Expenditure compared with original estimate',
         f'{actual_exp / est_cost:.4f} × estimated cost' if est_cost > 0 else None,
-        'Actual expenditure ≥1.8 × estimated cost: +15; otherwise +0.', 15,
+        'Actual expenditure ≥1.8 × estimated cost: +10; otherwise +0.', 10,
         est_cost > 0 and project.get('actual_expenditure') is not None)
+
+    score = round(sum(row['points'] for row in components), 6)
 
     # Clamp score to 0 - 100
     final_score = round(min(100.0, max(0.0, score)), 1)

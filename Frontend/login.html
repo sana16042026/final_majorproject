@@ -22,6 +22,7 @@
                 <small class="text-muted">AI-powered audit &amp; monitoring &middot; Sign in to continue</small>
             </div>
 
+            {% if notice %}<div class="alert alert-success py-2 small" role="status">{{ notice }}</div>{% endif %}
             {% if error %}
             <div class="alert alert-danger py-2 small">{{ error }}</div>
             {% endif %}
@@ -40,6 +41,7 @@
                 </button>
             </form>
 
+            <p class="text-center small mt-3">New here? <a href="{{ url_for('accounts.signup') }}">Sign Up</a></p>
             <hr class="my-4">
             <div class="small fw-semibold mb-2">Demo accounts <span class="text-muted fw-normal">(click a row to fill)</span></div>
             <table class="table table-sm small mb-0">

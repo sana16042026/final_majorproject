@@ -108,7 +108,7 @@ function renderProjectModalContent(data) {
 
     // Vendor details (hidden for citizens: the server removes vendor_id for them)
     const vendorHtml = p.vendor_id !== undefined ?
-        `<div class="col-md-4"><strong>Vendor ID:</strong> ${p.vendor_id} (${p.number_of_bidders ?? 'Unavailable'} bidders)</div>` : '';
+        `<div class="col-md-4"><strong>Vendor ID:</strong> ${p.vendor_id}</div>` : '';
 
     // NLP similarity section
     let nlpHtml = '';

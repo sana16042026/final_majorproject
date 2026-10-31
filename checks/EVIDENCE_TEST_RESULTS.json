@@ -1,0 +1,17 @@
+{
+  "passed": 10,
+  "checks": [
+    "All 20000 saved pairs reconcile exactly with six evidence components",
+    "Pair listing supplies IDs for clickable evidence buttons",
+    "Evidence API matches saved Likely duplicate score",
+    "Evidence API matches saved Possible overlap score",
+    "Page loads explanation handler and renders score buttons",
+    "Unknown pair returns not found",
+    "Anonymous evidence access blocked",
+    "Citizen cannot access restricted evidence",
+    "Out-of-district pair cannot leak evidence to scoped administrator",
+    "Zero-point factors and saved rounding are shown explicitly"
+  ],
+  "pairs_reconciled": 20000,
+  "database": "drishti_final_major_validation"
+}

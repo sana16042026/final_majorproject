@@ -232,6 +232,7 @@
 {% endif %}</div>{% endif %}
 {% endblock %}
 {% block extra_scripts %}
+{% if analysis_mode == 'similarity' %}<script src="{{ url_for('static', filename='js/duplicate_evidence.js') }}"></script>{% endif %}
 <script src="{{ url_for('static', filename='js/analysis_workspace.js') }}"></script>
 {% if analysis_mode == 'risk' %}<script src="{{ url_for('static', filename='js/risk.js') }}"></script><script>/* Medium / Low risk tabs: paginated + searchable lists from /api/risk-analysis/projects */
 (function () {
@@ -380,7 +381,7 @@
                     <td>${pairHtml(p.work_id_1, p.description_1)}${pairHtml(p.work_id_2, p.description_2)}</td>
                     <td><small class="text-muted">${esc(p.district)}, ${esc(p.state)}</small></td>
                     <td>${(Number(p.text_similarity) * 100).toFixed(0)}%</td>
-                    <td><span class="badge ${badge} fs-6">${Number(p.evidence_score).toFixed(0)}/100</span></td>
+                    <td><button type="button" class="badge ${badge} fs-6 border-0" data-evidence-pair="${Number(p.pair_id)}" title="Show evidence-score calculation" aria-label="Explain evidence score for ${esc(p.work_id_1)} and ${esc(p.work_id_2)}">${Number(p.evidence_score)}/100 <i class="bi bi-info-circle"></i></button></td>
                     <td><span class="badge ${badge}">${esc(p.classification)}</span></td>
                     <td class="small" style="max-width: 360px;">${esc(p.evidence)}</td>
                 </tr>`;

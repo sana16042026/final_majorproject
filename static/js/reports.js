@@ -195,8 +195,8 @@ function renderOfficialReport(reportData) {
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Bidders:</td>
-                                    <td class="text-end">${reportEsc(p.number_of_bidders)} vendor(s) [${reportEsc(p.vendor_id)}]</td>
+                                    <td>Vendor:</td>
+                                    <td class="text-end">${reportEsc(p.vendor_id)}</td>
                                 </tr>
                             </table>
                         </div>

@@ -138,6 +138,9 @@ if __name__ == '__main__':
             result = reprocess_current_dataset()
             if not result.get('success'): raise RuntimeError(result['message'])
 
+    from services.data_processor import refresh_saved_risk_scores
+    refresh_saved_risk_scores()
+
     url = f"http://{Config.APP_HOST}:{Config.APP_PORT}"
     print(f"\n[Application] Starting Web Server on {url} ...")
     print("[Application] Admin / Authority session active by default.")
